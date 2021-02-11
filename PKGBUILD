@@ -25,7 +25,7 @@
 ## Default is: 0 => generic
 ## Good option if your package is for one machine: 99 => native
 if [ -z ${_microarchitecture+x} ]; then
-  _microarchitecture=0
+  _microarchitecture=10
 fi
 
 ## Disable NUMA since most users do not have multiple processors. Breaks CUDA/NvEnc.
