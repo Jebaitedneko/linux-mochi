@@ -78,7 +78,7 @@ _makenconfig=
 
 pkgbase=linux-manjaro-xanmod
 pkgname=("${pkgbase}" "${pkgbase}-headers")
-pkgver=5.10.14
+pkgver=5.10.15
 _major=5.10
 _branch=5.x
 xanmod=1
@@ -87,7 +87,7 @@ pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
 
-__commit="7aba77c63c1a04b2f49cb631baa130795823274d" # 5.10.14-1
+__commit="b01580af8625cbb92000a03bb6e8f37ec83759d8" # 5.10.15-1
 
 license=(GPL2)
 makedepends=(
@@ -101,11 +101,11 @@ source=("https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar
         choose-gcc-optimization.sh
         "https://gitlab.manjaro.org/packages/core/linux510/-/archive/${__commit}/linux59-${__commit}.tar.gz")
 
-sha256sums=('dcdf99e43e98330d925016985bfbc7b83c66d367b714b2de0cbbfcbf83d8ca43'  # kernel tar.xz
-            'SKIP'                                                              #        tar.sign
-            '15d9efbd96af494a31b9420a17331cf1da243141e4c7b002696588285787ee62'  # xanmod
-            '03bb8b234a67b877a34a8212936ba69d8700c54c7877686cbd9742a536c87134'  # choose-gcc-optimization.sh
-            'c3a95b72f1cbb82b4b8e9becab06d998a96520bfc519a339b28cba78964c357b') # manjaro
+sha256sums=('SKIP'  # kernel tar.xz
+            'SKIP'  #        tar.sign
+            'SKIP'  # xanmod
+            'SKIP'  # choose-gcc-optimization.sh
+            'SKIP') # manjaro
 validpgpkeys=(
     'ABAF11C65A2970B130ABE3C479BE3E4300411886' # Linux Torvalds
     '647F28654894E3BD457199BE38DBBDC86092693E' # Greg Kroah-Hartman
