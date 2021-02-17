@@ -1,6 +1,6 @@
 # Maintainer: ANDRoid7890 <andrey.android7890@gmail.com>
 
-# https://gitlab.manjaro.org/packages/core/linux510
+# https://gitlab.manjaro.org/packages/core/linux511
 #
 # Maintainer: Philip Müller
 # Maintainer: Bernhard Landauer
@@ -78,16 +78,16 @@ _makenconfig=
 
 pkgbase=linux-manjaro-xanmod
 pkgname=("${pkgbase}" "${pkgbase}-headers")
-pkgver=5.10.15
-_major=5.10
+pkgver=5.11.0
+_major=5.11
 _branch=5.x
 xanmod=1
-pkgrel=1
+pkgrel=0
 pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
 
-__commit="b01580af8625cbb92000a03bb6e8f37ec83759d8" # 5.10.15-1
+__commit="73245f163c55e0ea2ae246cb13f77ef86a5a61b7" # 5.11.0
 
 license=(GPL2)
 makedepends=(
@@ -99,7 +99,7 @@ _srcname="linux-${pkgver}-xanmod${xanmod}"
 source=("https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
         "https://github.com/xanmod/linux/releases/download/${pkgver}-xanmod${xanmod}/patch-${pkgver}-xanmod${xanmod}.xz"
         choose-gcc-optimization.sh
-        "https://gitlab.manjaro.org/packages/core/linux510/-/archive/${__commit}/linux59-${__commit}.tar.gz")
+        "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${__commit}/linux11-${__commit}.tar.gz")
 
 sha256sums=('SKIP'  # kernel tar.xz
             'SKIP'  #        tar.sign
@@ -154,14 +154,14 @@ prepare() {
   done
   
   # Manjaro patches
-  rm ../linux510-$__commit/0103-futex.patch  # remove conflicting one
+  rm ../linux511-$__commit/0103-futex.patch  # remove conflicting one
   local _patch
-  for _patch in ../linux510-$__commit/*; do
+  for _patch in ../linux511-$__commit/*; do
       [[ $_patch = *.patch ]] || continue
       msg2 "Applying patch: $_patch..."
-      patch -Np1 < "../linux510-$__commit/$_patch"
+      patch -Np1 < "../linux511-$__commit/$_patch"
   done 
-  git apply -p1 < "../linux510-$__commit/0513-bootsplash.gitpatch"
+  git apply -p1 < "../linux511-$__commit/0513-bootsplash.gitpatch"
   scripts/config --enable CONFIG_BOOTSPLASH
   
   # CONFIG_STACK_VALIDATION gives better stack traces. Also is enabled in all official kernel packages by Archlinux team
