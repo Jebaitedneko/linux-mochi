@@ -155,6 +155,7 @@ prepare() {
   
   # Manjaro patches
   rm ../linux511-$__commit/0103-futex.patch  # remove conflicting one
+  rm ../linux511-$__commit/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-CLONE_NEWUSER.patch # not needed
   local _patch
   for _patch in ../linux511-$__commit/*; do
       [[ $_patch = *.patch ]] || continue
