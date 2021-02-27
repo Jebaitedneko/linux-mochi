@@ -163,6 +163,7 @@ prepare() {
       patch -Np1 < "../linux511-$__commit/$_patch"
   done 
   git apply -p1 < "../linux511-$__commit/0513-bootsplash.gitpatch"
+
   scripts/config --enable CONFIG_BOOTSPLASH
   
   # CONFIG_STACK_VALIDATION gives better stack traces. Also is enabled in all official kernel packages by Archlinux team
@@ -204,6 +205,9 @@ prepare() {
   # CONFIG_ANDROID_BINDER_IPC_SELFTEST is not set
   
   scripts/config --set-str CONFIG_DEFAULT_HOSTNAME "manjaro"
+
+  scripts/config --disable CONFIG_HZ_500
+  scripts/config --enable CONFIG_HZ_1000
 
   # Let's user choose microarchitecture optimization in GCC
   sh ${srcdir}/choose-gcc-optimization.sh $_microarchitecture
@@ -257,7 +261,7 @@ prepare() {
 
 build() {
   cd linux-${_major}
-  make all
+  make -j8 CC="ccache gcc" all
 }
 
 _package() {
