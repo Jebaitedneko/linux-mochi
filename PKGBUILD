@@ -78,16 +78,16 @@ _makenconfig=
 
 pkgbase=linux-manjaro-xanmod
 pkgname=("${pkgbase}" "${pkgbase}-headers")
-pkgver=5.11.1
+pkgver=5.11.7
 _major=5.11
 _branch=5.x
-xanmod=2-cacule
-pkgrel=0
+xanmod=1
+pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
 
-__commit="2baf9050c4d9887fcde0d015811f81059c215959" # 5.11.1-1
+__commit="d7854dbaae7e39887737bae4a06a51a9259ff6ae" # 5.11.7-1
 
 license=(GPL2)
 makedepends=(
@@ -291,7 +291,7 @@ _package() {
   echo "${pkgver}-${pkgrel}-Manjaro-Xanmod x64" | install -Dm644 /dev/stdin "${pkgdir}/boot/${pkgbase}.kver"
 
   msg2 "Installing modules..."
-  make INSTALL_MOD_PATH="$pkgdir/usr" modules_install
+  make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
 
   # remove build and source links
   rm "$modulesdir"/{source,build}
@@ -302,6 +302,7 @@ _package-headers() {
   provides=()
   replaces=()
   conflicts=()
+  depends=(pahole)
 
   cd linux-${_major}
   local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
@@ -370,6 +371,8 @@ _package-headers() {
     esac
   done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
 
+  msg2 "Stripping vmlinux..."
+  strip -v $STRIP_STATIC "$builddir/vmlinux"
   msg2 "Adding symlink..."
   mkdir -p "$pkgdir/usr/src"
   ln -sr "$builddir" "$pkgdir/usr/src/$pkgbase"
