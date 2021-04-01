@@ -173,10 +173,8 @@ prepare() {
             msg2 "Applying patch ${i} from ${d}" && patch -Np1 < $patch_dir/${d}/${i}_*.patch
     done
   done
-  msg2 "Fixing Kconfigs..."
-  find -type f -iname "Kconfig*" -exec sed -i "s/\-\-\-help\-\-\-/help/g" {} \;
-  scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
-  scripts/config --enable CONFIG_INLINE_OPTIMIZATION
+  # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
+  # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
 
   scripts/config --enable CONFIG_BOOTSPLASH
   
