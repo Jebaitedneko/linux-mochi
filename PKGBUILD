@@ -131,6 +131,10 @@ export KBUILD_BUILD_TIMESTAMP=${KBUILD_BUILD_TIMESTAMP:-$(date -Ru${SOURCE_DATE_
 prepare() {
   cd linux-${_major}  
   
+  msg2 "Xanmod patch not found. Applying workaround..."
+  [ ! -f ../../patch-${pkgver}-xanmod${xanmod} ] \
+    && xz -d ../../patch-${pkgver}-xanmod${xanmod}.xz \
+    && mv ../../patch-${pkgver}-xanmod${xanmod} ../
   # Apply Xanmod patch
   if [ "$use_cachy" = "y" ]; then
     patch -Np1 -i ../patch-${pkgver}-xanmod${xanmod}-cachy
