@@ -1,0 +1,90 @@
+From 9d94bbd45847b67bd6261c326429d047e996571a Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 25 Sep 2020 16:43:53 -0700
+Subject: [PATCH] tracing: add support for objtool mcount
+
+This change adds build support for using objtool to generate
+__mcount_loc sections.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ Makefile               |  7 +++++++
+ kernel/trace/Kconfig   | 13 +++++++++++++
+ scripts/Makefile.build |  3 +++
+ 3 files changed, 23 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 9fb0c53f139c..c0b04a1f7059 100644
+--- a/Makefile
++++ b/Makefile
+@@ -891,6 +891,9 @@ ifdef CONFIG_FTRACE_MCOUNT_USE_CC
+     endif
+   endif
+ endif
++ifdef CONFIG_FTRACE_MCOUNT_USE_OBJTOOL
++  CC_FLAGS_USING	+= -DCC_USING_NOP_MCOUNT
++endif
+ ifdef CONFIG_FTRACE_MCOUNT_USE_RECORDMCOUNT
+   ifdef CONFIG_HAVE_C_RECORDMCOUNT
+     BUILD_C_RECORDMCOUNT := y
+@@ -1267,6 +1270,10 @@ uapi-asm-generic:
+ PHONY += prepare-objtool prepare-resolve_btfids
+ prepare-objtool: $(objtool_target)
+ ifeq ($(SKIP_STACK_VALIDATION),1)
++ifdef CONFIG_FTRACE_MCOUNT_USE_OBJTOOL
++	@echo "error: Cannot generate __mcount_loc for CONFIG_DYNAMIC_FTRACE=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
++	@false
++endif
+ ifdef CONFIG_UNWINDER_ORC
+ 	@echo "error: Cannot generate ORC metadata for CONFIG_UNWINDER_ORC=y, please install libelf-dev, libelf-devel or elfutils-libelf-devel" >&2
+ 	@false
+diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
+index c49467fb1694..261b0f1c00db 100644
+--- a/kernel/trace/Kconfig
++++ b/kernel/trace/Kconfig
+@@ -51,6 +51,11 @@ config HAVE_NOP_MCOUNT
+ 	help
+ 	  Arch supports the gcc options -pg with -mrecord-mcount and -nop-mcount
+ 
++config HAVE_OBJTOOL_MCOUNT
++	bool
++	help
++	  Arch supports objtool --mcount
++
+ config HAVE_C_RECORDMCOUNT
+ 	bool
+ 	help
+@@ -605,10 +610,18 @@ config FTRACE_MCOUNT_USE_CC
+ 	depends on !FTRACE_MCOUNT_USE_PATCHABLE_FUNCTION_ENTRY
+ 	depends on FTRACE_MCOUNT_RECORD
+ 
++config FTRACE_MCOUNT_USE_OBJTOOL
++	def_bool y
++	depends on HAVE_OBJTOOL_MCOUNT
++	depends on !FTRACE_MCOUNT_USE_PATCHABLE_FUNCTION_ENTRY
++	depends on !FTRACE_MCOUNT_USE_CC
++	depends on FTRACE_MCOUNT_RECORD
++
+ config FTRACE_MCOUNT_USE_RECORDMCOUNT
+ 	def_bool y
+ 	depends on !FTRACE_MCOUNT_USE_PATCHABLE_FUNCTION_ENTRY
+ 	depends on !FTRACE_MCOUNT_USE_CC
++	depends on !FTRACE_MCOUNT_USE_OBJTOOL
+ 	depends on FTRACE_MCOUNT_RECORD
+ 
+ config TRACING_MAP
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index d94fc9ab819d..59fabd9685ee 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -238,6 +238,9 @@ endif
+ ifdef CONFIG_X86_SMAP
+   objtool_args += --uaccess
+ endif
++ifdef CONFIG_FTRACE_MCOUNT_USE_OBJTOOL
++  objtool_args += --mcount
++endif
+ 
+ # 'OBJECT_FILES_NON_STANDARD := y': skip objtool checking for a directory
+ # 'OBJECT_FILES_NON_STANDARD_foo.o := 'y': skip objtool checking for a file

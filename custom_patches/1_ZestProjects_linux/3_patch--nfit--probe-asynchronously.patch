@@ -1,0 +1,31 @@
+From 33723d92a6c8da731a972e0750742877db436da9 Mon Sep 17 00:00:00 2001
+From: Sinan Kaya <okaya@kernel.org>
+Date: Mon, 3 Dec 2018 04:18:10 +0000
+Subject: [PATCH] nfit: probe asynchronously
+
+TAG_MSFT: lcow
+
+Signed-off-by: Sinan Kaya <okaya@kernel.org>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+Signed-off-by: Pavel Tatashin <pasha.tatashin@soleen.com>
+Link: https://github.com/microsoft/WSL2-Linux-Kernel/commit/bd8fd4aabc70f774644c5fec4f4029cbfaa2635f
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ drivers/acpi/nfit/core.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/acpi/nfit/core.c b/drivers/acpi/nfit/core.c
+index 4c97b0f44fce..ecc2ead5b385 100644
+--- a/drivers/acpi/nfit/core.c
++++ b/drivers/acpi/nfit/core.c
+@@ -3842,6 +3842,9 @@ static struct acpi_driver acpi_nfit_driver = {
+ 		.remove = acpi_nfit_remove,
+ 		.notify = acpi_nfit_notify,
+ 	},
++	.drv = {
++		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
++	},
+ };
+ 
+ static __init int nfit_init(void)

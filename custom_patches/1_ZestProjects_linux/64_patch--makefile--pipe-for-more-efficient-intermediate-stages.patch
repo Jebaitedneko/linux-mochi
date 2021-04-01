@@ -1,0 +1,32 @@
+From 3c986cd188fae4c6441b496709739c7082cc96fb Mon Sep 17 00:00:00 2001
+From: Diab Neiroukh <lazerl0rd@thezest.dev>
+Date: Wed, 13 Jan 2021 23:14:28 +0000
+Subject: [PATCH] Makefile: Pipe for more efficient intermediate stages.
+
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index e6eb96b8b4d5..570bfe6a31cd 100644
+--- a/Makefile
++++ b/Makefile
+@@ -415,7 +415,7 @@ HOSTCXX	= g++
+ endif
+ 
+ export KBUILD_USERCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
+-			      -O2 -fomit-frame-pointer -std=gnu89
++			      -O2 -fomit-frame-pointer -std=gnu89 -pipe
+ export KBUILD_USERLDFLAGS :=
+ 
+ KBUILD_HOSTCFLAGS   := $(KBUILD_USERCFLAGS) $(HOST_LFS_CFLAGS) $(HOSTCFLAGS)
+@@ -496,7 +496,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Werror=strict-prototypes -Wno-trigraphs \
+ 		   -fno-strict-aliasing -fno-common -fshort-wchar -fno-PIE \
+ 		   -Werror=implicit-function-declaration -Werror=implicit-int \
+ 		   -Werror=return-type -Wno-format-security \
+-		   -std=gnu89
++		   -std=gnu89 -pipe
+ KBUILD_CPPFLAGS := -D__KERNEL__
+ KBUILD_AFLAGS_KERNEL :=
+ KBUILD_CFLAGS_KERNEL :=

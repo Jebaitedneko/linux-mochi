@@ -165,13 +165,19 @@ prepare() {
   git apply -p1 < "../linux511-$__commit/0513-bootsplash.gitpatch"
 
   # Custom Patches
+  ( cd ../../ && ./getpatches.sh )
   patch_dir=../../custom_patches
   for d in $(cd $patch_dir && ls -1); do
-    for i in {0..1000}; do
+    for i in {1000..0}; do
         [ -f $patch_dir/${d}/${i}_*.patch ] &&
             msg2 "Applying patch ${i} from ${d}" && patch -Np1 < $patch_dir/${d}/${i}_*.patch
     done
   done
+  msg2 "Fixing Kconfigs..."
+  find -type f -iname "Kconfig*" -exec sed -i "s/\-\-\-help\-\-\-/help/g" {} \;
+  scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
+  scripts/config --enable CONFIG_INLINE_OPTIMIZATION
+  scripts/config --enable CONFIG_DXGKRNL
 
   scripts/config --enable CONFIG_BOOTSPLASH
   

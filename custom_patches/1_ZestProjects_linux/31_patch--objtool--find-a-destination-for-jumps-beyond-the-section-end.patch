@@ -1,0 +1,31 @@
+From b1c6e34ef999cd149eaf518030c11ae0968b62b3 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 14 Aug 2020 14:38:01 -0700
+Subject: [PATCH] objtool: Find a destination for jumps beyond the section end
+
+With -ffunction-sections, Clang can generate a jump beyond the end of
+a section when the section ends in an unreachable instruction. If the
+offset matches the section length, use the last instruction as the
+jump destination.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ tools/objtool/check.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/tools/objtool/check.c b/tools/objtool/check.c
+index cc85f542cc64..d82082879049 100644
+--- a/tools/objtool/check.c
++++ b/tools/objtool/check.c
+@@ -908,6 +908,10 @@ static int add_jump_destinations(struct objtool_file *file)
+ 		}
+ 
+ 		insn->jump_dest = find_insn(file, dest_sec, dest_off);
++
++		if (!insn->jump_dest && dest_sec->len == dest_off)
++			insn->jump_dest = find_last_insn(file, dest_sec);
++
+ 		if (!insn->jump_dest) {
+ 
+ 			/*

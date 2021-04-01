@@ -1,0 +1,32 @@
+From be72937995febd8c3458fd56ee2529ffd618a97b Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <natechancellor@gmail.com>
+Date: Wed, 17 Jun 2020 15:14:38 -0700
+Subject: [PATCH] gpu: dxgkrnl: Use proper enum in command_vgpu_to_host_init0
+
+In file included from drivers/gpu/dxgkrnl/dxgvmbus.c:22:
+drivers/gpu/dxgkrnl/dxgvmbus.h:826:26: warning: implicit conversion from
+enumeration type 'enum dxgkvmb_commandtype' to different enumeration
+type 'enum dxgkvmb_commandtype_global' [-Wenum-conversion]
+        command->command_type   = DXGK_VMBCOMMAND_INVALID;
+                                ~ ^~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated.
+
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ drivers/hv/dxgkrnl/dxgvmbus.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/hv/dxgkrnl/dxgvmbus.h b/drivers/hv/dxgkrnl/dxgvmbus.h
+index 5507c85185c0..25d81ddca056 100644
+--- a/drivers/hv/dxgkrnl/dxgvmbus.h
++++ b/drivers/hv/dxgkrnl/dxgvmbus.h
+@@ -836,7 +836,7 @@ static inline void command_vm_to_host_init2(struct dxgkvmb_command_vm_to_host
+ static inline void command_vgpu_to_host_init0(struct dxgkvmb_command_vm_to_host
+ 					      *command)
+ {
+-	command->command_type	= DXGK_VMBCOMMAND_INVALID;
++	command->command_type	= DXGK_VMBCOMMAND_INVALID_VM_TO_HOST;
+ 	command->process.v	= 0;
+ 	command->command_id	= 0;
+ 	command->channel_type	= DXGKVMB_VGPU_TO_HOST;

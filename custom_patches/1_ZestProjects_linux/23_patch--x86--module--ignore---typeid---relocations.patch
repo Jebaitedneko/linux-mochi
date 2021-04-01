@@ -1,0 +1,28 @@
+From 8ae4098b81e7476110c3f8e6a32917dfc13094d0 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Wed, 15 Jan 2020 15:29:21 -0800
+Subject: [PATCH] x86, module: Ignore __typeid__ relocations
+
+Also ignore these relocations when loading modules.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ arch/x86/kernel/module.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/x86/kernel/module.c b/arch/x86/kernel/module.c
+index 34b153cbd4ac..506928b06af5 100644
+--- a/arch/x86/kernel/module.c
++++ b/arch/x86/kernel/module.c
+@@ -196,6 +196,10 @@ static int __apply_relocate_add(Elf64_Shdr *sechdrs,
+ 			val -= (u64)loc;
+ 			write(loc, &val, 8);
+ 			break;
++		case R_X86_64_8:
++			if (!strncmp(strtab + sym->st_name, "__typeid__", 10))
++				break;
++			/* fallthrough */
+ 		default:
+ 			pr_err("%s: Unknown rela relocation: %llu\n",
+ 			       me->name, ELF64_R_TYPE(rel[i].r_info));

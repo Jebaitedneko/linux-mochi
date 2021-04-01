@@ -1,0 +1,40 @@
+From 95d108662416104ca2ca82885ac4f935be44c1d1 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Thu, 10 Sep 2020 15:33:56 -0700
+Subject: [PATCH] mm: add generic __va_function and __pa_function
+
+We use non-canonical CFI jump tables with CONFIG_CFI_CLANG, which
+means the compiler replaces function address references with the
+address of the function's CFI jump table entry. This results in
+__pa_symbol(function), for example, returning the physical address of
+the jump table entry, which can lead to address space confusion since
+the jump table itself points to a virtual address.
+
+This change adds generic definitions for __va_function and
+__pa_function, which architectures that support CFI can override.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ include/linux/mm.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index cd5c313729ea..391b1da07485 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -115,6 +115,14 @@ extern int mmap_rnd_compat_bits __read_mostly;
+ #define __pa_symbol(x)  __pa(RELOC_HIDE((unsigned long)(x), 0))
+ #endif
+ 
++#ifndef __va_function
++#define __va_function(x) (x)
++#endif
++
++#ifndef __pa_function
++#define __pa_function(x) __pa_symbol(x)
++#endif
++
+ #ifndef page_to_virt
+ #define page_to_virt(x)	__va(PFN_PHYS(page_to_pfn(x)))
+ #endif

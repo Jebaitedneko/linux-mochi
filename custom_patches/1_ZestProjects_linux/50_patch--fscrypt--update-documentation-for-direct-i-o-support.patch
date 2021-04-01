@@ -1,0 +1,55 @@
+From c0b055650119ee7a9c0be221219a477027669c75 Mon Sep 17 00:00:00 2001
+From: Satya Tangirala <satyat@google.com>
+Date: Thu, 21 Jan 2021 23:03:36 +0000
+Subject: [PATCH] fscrypt: update documentation for direct I/O support
+
+Update fscrypt documentation to reflect the addition of direct I/O support
+and document the necessary conditions for direct I/O on encrypted files.
+
+Signed-off-by: Satya Tangirala <satyat@google.com>
+Reviewed-by: Eric Biggers <ebiggers@google.com>
+Reviewed-by: Jaegeuk Kim <jaegeuk@kernel.org>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ Documentation/filesystems/fscrypt.rst | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/filesystems/fscrypt.rst b/Documentation/filesystems/fscrypt.rst
+index 44b67ebd6e40..c0c1747fa2fb 100644
+--- a/Documentation/filesystems/fscrypt.rst
++++ b/Documentation/filesystems/fscrypt.rst
+@@ -1047,8 +1047,10 @@ astute users may notice some differences in behavior:
+   may be used to overwrite the source files but isn't guaranteed to be
+   effective on all filesystems and storage devices.
+ 
+-- Direct I/O is not supported on encrypted files.  Attempts to use
+-  direct I/O on such files will fall back to buffered I/O.
++- Direct I/O is supported on encrypted files only under some
++  circumstances (see `Direct I/O support`_ for details). When these
++  circumstances are not met, attempts to use direct I/O on encrypted
++  files will fall back to buffered I/O.
+ 
+ - The fallocate operations FALLOC_FL_COLLAPSE_RANGE and
+   FALLOC_FL_INSERT_RANGE are not supported on encrypted files and will
+@@ -1121,6 +1123,21 @@ It is not currently possible to backup and restore encrypted files
+ without the encryption key.  This would require special APIs which
+ have not yet been implemented.
+ 
++Direct I/O support
++==================
++
++Direct I/O on encrypted files is supported through blk-crypto. In
++particular, this means the kernel must have CONFIG_BLK_INLINE_ENCRYPTION
++enabled, the filesystem must have had the 'inlinecrypt' mount option
++specified, and either hardware inline encryption must be present, or
++CONFIG_BLK_INLINE_ENCRYPTION_FALLBACK must have been enabled. Further,
++the starting position in the file and the length of any I/O must be aligned
++to the filesystem block size (*not* necessarily the same as the block
++device's block size). If any of these conditions isn't met, attempts to do
++direct I/O on an encrypted file will fall back to buffered I/O. However,
++there aren't any additional requirements on user buffer alignment (apart
++from those already present when using direct I/O on unencrypted files).
++
+ Encryption policy enforcement
+ =============================
+ 

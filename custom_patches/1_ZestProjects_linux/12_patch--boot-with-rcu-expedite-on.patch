@@ -1,0 +1,29 @@
+From 29df972803823b610550a0aec24910e1484777ed Mon Sep 17 00:00:00 2001
+From: Arjan van de Ven <arjan@linux.intel.com>
+Date: Tue, 21 Jun 2016 21:23:52 +0000
+Subject: [PATCH] Boot with rcu expedite on
+
+Turn on rcu_expedite by default, we'll turn it back off at the end of the boot
+
+Signed-off-by: Arjan van de Ven <arjan@linux.intel.com>
+[nc: Applied from clearlinux-pkgs directly but this is in the stock WSL2
+     kernel]
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ kernel/ksysfs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/ksysfs.c b/kernel/ksysfs.c
+index 35859da8bd4f..e16eb77706a0 100644
+--- a/kernel/ksysfs.c
++++ b/kernel/ksysfs.c
+@@ -147,7 +147,7 @@ static ssize_t fscaps_show(struct kobject *kobj,
+ KERNEL_ATTR_RO(fscaps);
+ 
+ #ifndef CONFIG_TINY_RCU
+-int rcu_expedited;
++int rcu_expedited = 1;
+ static ssize_t rcu_expedited_show(struct kobject *kobj,
+ 				  struct kobj_attribute *attr, char *buf)
+ {

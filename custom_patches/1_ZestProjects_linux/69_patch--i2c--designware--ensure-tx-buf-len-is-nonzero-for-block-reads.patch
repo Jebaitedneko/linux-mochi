@@ -1,0 +1,40 @@
+From f4532e013bab91bb95880f9bc5c2b9d4136f90c9 Mon Sep 17 00:00:00 2001
+From: Sultan Alsawaf <sultan@kerneltoast.com>
+Date: Sun, 13 Sep 2020 14:08:46 -0700
+Subject: [PATCH] i2c: designware: Ensure tx_buf_len is nonzero for block reads
+
+The point of adding a byte to len in i2c_dw_recv_len() is to make sure
+that tx_buf_len is nonzero, so that i2c_dw_xfer_msg() can let the i2c
+controller know that the i2c transaction can end. Otherwise, the i2c
+controller will think that the transaction can never end for block
+reads, which results in the stop-detection bit never being set and thus
+the transaction timing out.
+
+Adding a byte to len is not a reliable way to do this though; sometimes
+it lets tx_buf_len become zero, which results in the scenario described
+above. Therefore, just directly ensure tx_buf_len cannot be zero to fix
+the issue.
+
+Fixes: c3ae106050b9 ("i2c: designware: Implement support for SMBus block read and write")
+Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ drivers/i2c/busses/i2c-designware-master.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/i2c/busses/i2c-designware-master.c b/drivers/i2c/busses/i2c-designware-master.c
+index d78f48ca4886..22f28516bca7 100644
+--- a/drivers/i2c/busses/i2c-designware-master.c
++++ b/drivers/i2c/busses/i2c-designware-master.c
+@@ -395,8 +395,9 @@ i2c_dw_recv_len(struct dw_i2c_dev *dev, u8 len)
+ 	 * Adjust the buffer length and mask the flag
+ 	 * after receiving the first byte.
+ 	 */
+-	len += (flags & I2C_CLIENT_PEC) ? 2 : 1;
+-	dev->tx_buf_len = len - min_t(u8, len, dev->rx_outstanding);
++	if (flags & I2C_CLIENT_PEC)
++		len++;
++	dev->tx_buf_len = len - min_t(u8, len - 1, dev->rx_outstanding);
+ 	msgs[dev->msg_read_idx].len = len;
+ 	msgs[dev->msg_read_idx].flags &= ~I2C_M_RECV_LEN;
+ 
