@@ -1,0 +1,13 @@
+diff --git a/drivers/usb/typec/ucsi/ucsi_ccg.c b/drivers/usb/typec/ucsi/ucsi_ccg.c
+index bff96d6..61bdfa2 100644
+--- a/drivers/usb/typec/ucsi/ucsi_ccg.c
++++ b/drivers/usb/typec/ucsi/ucsi_ccg.c
+@@ -884,7 +884,7 @@ ccg_cmd_write_flash_row(struct ucsi_ccg *uc, u16 row,
+ 	/* Copy the data into the flash read/write memory. */
+ 	put_unaligned_le16(REG_FLASH_RW_MEM, buf);
+ 
+-	memcpy(buf + 2, data, CCG4_ROW_SIZE);
++	strncpy(buf + 2, data, CCG4_ROW_SIZE);
+ 
+ 	mutex_lock(&uc->lock);
+ 
