@@ -165,7 +165,7 @@ prepare() {
   git apply -p1 < "../linux511-$__commit/0513-bootsplash.gitpatch"
 
   # Custom Patches
-  ( cd ../../ && ./getpatches.sh )
+  # ( cd ../../ && ./getpatches.sh ) # uncomment to re-enable auto-fetching
   patch_dir=../../custom_patches
   for d in $(cd $patch_dir && ls -1); do
     for i in {1000..0}; do
