@@ -67,7 +67,7 @@ fi
 #
 # More at this wiki page ---> https://wiki.archlinux.org/index.php/Modprobed-db
 if [ -z ${_localmodcfg} ]; then
-  _localmodcfg=n
+  _localmodcfg=y
 fi
 
 # Tweak kernel options prior to a build via nconfig
@@ -175,9 +175,6 @@ prepare() {
   done
   msg2 "Fixing Kconfigs..."
   find -type f -iname "Kconfig*" -exec sed -i "s/\-\-\-help\-\-\-/help/g" {} \;
-  scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
-  scripts/config --enable CONFIG_INLINE_OPTIMIZATION
-  scripts/config --enable CONFIG_DXGKRNL
 
   scripts/config --enable CONFIG_BOOTSPLASH
   
