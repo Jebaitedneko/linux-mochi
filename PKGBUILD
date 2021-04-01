@@ -67,7 +67,7 @@ fi
 #
 # More at this wiki page ---> https://wiki.archlinux.org/index.php/Modprobed-db
 if [ -z ${_localmodcfg} ]; then
-  _localmodcfg=y
+  _localmodcfg=n
 fi
 
 # Tweak kernel options prior to a build via nconfig
@@ -273,7 +273,7 @@ prepare() {
 
 build() {
   cd linux-${_major}
-  make -j8 CC="ccache gcc" all
+  make -j$((`nproc`+2)) CC="ccache gcc" all
 }
 
 _package() {
