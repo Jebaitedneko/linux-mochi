@@ -1,0 +1,13 @@
+task:
+    container:
+        image: archlinux/base
+        cpu: 8
+        memory: 32G
+    script:
+        - pacman -Syu --needed --noconfirm base-devel ccache xmlto inetutils bc cpio python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
+        - sed -i '/E_ROOT/d' /usr/bin/makepkg
+        - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
+        - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
+        - env cibuild=y makepkg -sCcf --skipinteg --skipchecksums --skippgpcheck
+    artifacts:
+        path: "*.pkg.tar.zst"
