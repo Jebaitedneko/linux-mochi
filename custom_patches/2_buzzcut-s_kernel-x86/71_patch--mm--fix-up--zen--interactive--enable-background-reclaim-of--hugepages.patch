@@ -1,0 +1,25 @@
+From 1e20c3837ef825ca423882e116f318b38ea087da Mon Sep 17 00:00:00 2001
+From: Piyush Kumar <piyushkumg@gmail.com>
+Date: Sat, 11 Apr 2020 03:41:27 +0530
+Subject: [PATCH] mm: Fix-up "ZEN: INTERACTIVE: Enable background reclaim of
+ hugepages"
+
+---
+ mm/huge_memory.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 67d4fbd232e6..90d3741c7a7d 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -53,10 +53,7 @@ unsigned long transparent_hugepage_flags __read_mostly =
+ #ifdef CONFIG_TRANSPARENT_HUGEPAGE_MADVISE
+ 	(1<<TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG)|
+ #endif
+-#ifdef CONFIG_ZEN_INTERACTIVE
+ 	(1<<TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG)|
+-#else
+-	(1<<TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG)|
+ #endif
+ 	(1<<TRANSPARENT_HUGEPAGE_DEFRAG_KHUGEPAGED_FLAG)|
+ 	(1<<TRANSPARENT_HUGEPAGE_USE_ZERO_PAGE_FLAG);
