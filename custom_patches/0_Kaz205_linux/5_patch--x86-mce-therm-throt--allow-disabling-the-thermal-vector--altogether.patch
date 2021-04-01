@@ -1,0 +1,49 @@
+From 7799a5f1caecec5f29d4c09da068bf32c96d7853 Mon Sep 17 00:00:00 2001
+From: "Jason A. Donenfeld" <Jason@zx2c4.com>
+Date: Tue, 7 Apr 2020 00:11:34 -0600
+Subject: [PATCH] x86/mce/therm_throt: allow disabling the thermal vector
+ altogether
+
+The thermal IRQ handler uses 1.21% CPU on my system when it's hot from
+compiling things. Indeed looking at /proc/interrupts reveals quite a lot
+of events coming in. Beyond logging them, the existing drivers on the
+system don't appear to do very much that I'm interested in. So, add a
+way to disable this entirely so that I can regain precious CPU cycles.
+
+Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+Signed-off-by: Kazuki Hashimoto <kaz205@tuta.io>
+---
+ arch/x86/Kconfig                | 4 ++++
+ arch/x86/kernel/cpu/mce/intel.c | 3 ++-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index e122359beaa6c..71ab518d6beae 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1160,7 +1160,11 @@ config X86_MCE_INJECT
+ 
+ config X86_THERMAL_VECTOR
+ 	def_bool y
++	prompt "Machine check thermal vector"
+ 	depends on X86_MCE_INTEL
++	help
++	  Provide support for capturing thermal events, logging them, and
++	  passing them off to other drivers.
+ 
+ config X86_MCE_THERMAL_VERBOSE
+ 	bool "Verbose logging for thermal events"
+diff --git a/arch/x86/kernel/cpu/mce/intel.c b/arch/x86/kernel/cpu/mce/intel.c
+index c2476fe0682e6..7c58b1d0c007c 100644
+--- a/arch/x86/kernel/cpu/mce/intel.c
++++ b/arch/x86/kernel/cpu/mce/intel.c
+@@ -531,7 +531,8 @@ static void intel_imc_init(struct cpuinfo_x86 *c)
+ 
+ void mce_intel_feature_init(struct cpuinfo_x86 *c)
+ {
+-	intel_init_thermal(c);
++	if (IS_ENABLED(CONFIG_X86_THERMAL_VECTOR))
++		intel_init_thermal(c);
+ 	intel_init_cmci();
+ 	intel_init_lmce();
+ 	intel_ppin_init(c);

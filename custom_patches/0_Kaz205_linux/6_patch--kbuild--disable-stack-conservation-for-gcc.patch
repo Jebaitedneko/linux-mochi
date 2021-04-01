@@ -1,0 +1,30 @@
+From c77c5c16501bb1985a75356d7b69b5ecf2852d8a Mon Sep 17 00:00:00 2001
+From: Sultan Alsawaf <sultan@kerneltoast.com>
+Date: Sun, 8 Mar 2020 00:31:35 -0800
+Subject: [PATCH] kbuild: Disable stack conservation for GCC
+
+There's plenty of room on the stack for a few more inlined bytes here
+and there. The measured stack usage at runtime is still safe without
+this, and performance is surely improved at a microscopic level, so
+remove it.
+
+Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
+Signed-off-by: Kazuki Hashimoto <kaz205@tuta.io>
+---
+ Makefile | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index de1acaefe87e6..d254e3496ffde 100644
+--- a/Makefile
++++ b/Makefile
+@@ -934,9 +934,6 @@ KBUILD_CFLAGS	+= -fno-strict-overflow
+ # Make sure -fstack-check isn't enabled (like gentoo apparently did)
+ KBUILD_CFLAGS  += -fno-stack-check
+ 
+-# conserve stack if available
+-KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)
+-
+ # Prohibit date/time macros, which would make the build non-deterministic
+ KBUILD_CFLAGS   += -Werror=date-time
+ 
