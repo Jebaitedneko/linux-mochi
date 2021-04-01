@@ -1,0 +1,24 @@
+diff --git a/fs/f2fs/gc.c b/fs/f2fs/gc.c
+index 155842f..cea065a 100644
+--- a/fs/f2fs/gc.c
++++ b/fs/f2fs/gc.c
+@@ -14,6 +14,7 @@
+ #include <linux/delay.h>
+ #include <linux/freezer.h>
+ #include <linux/sched/signal.h>
++#include <linux/sched.h>
+ #include <uapi/linux/sched/types.h>
+ 
+ #include "f2fs.h"
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 59ddda0..5f89d2f 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6063,6 +6063,7 @@ int sched_setscheduler(struct task_struct *p, int policy,
+ {
+ 	return _sched_setscheduler(p, policy, param, true);
+ }
++EXPORT_SYMBOL_GPL(sched_setscheduler);
+ 
+ int sched_setattr(struct task_struct *p, const struct sched_attr *attr)
+ {
