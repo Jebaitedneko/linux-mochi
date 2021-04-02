@@ -1,0 +1,31 @@
+From 5dcde5f4a76921d4dd14e0c8ea103dce8cf9809d Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Wed, 16 Sep 2020 12:57:56 -0700
+Subject: [PATCH] x86, cpu: disable LTO for cpu.c
+
+Clang incorrectly inlines functions with differing stack protector
+attributes, which breaks __restore_processor_state() that relies on
+stack protector being disabled. This change disables LTO for cpu.c
+to work aroung the bug.
+
+Link: https://bugs.llvm.org/show_bug.cgi?id=47479
+Suggested-by: Nick Desaulniers <ndesaulniers@google.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+---
+ arch/x86/power/Makefile | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/x86/power/Makefile b/arch/x86/power/Makefile
+index 6907b523e856..5f711a441623 100644
+--- a/arch/x86/power/Makefile
++++ b/arch/x86/power/Makefile
+@@ -5,5 +5,9 @@ OBJECT_FILES_NON_STANDARD_hibernate_asm_$(BITS).o := y
+ # itself be stack-protected
+ CFLAGS_cpu.o	:= -fno-stack-protector
+ 
++# Clang may incorrectly inline functions with stack protector enabled into
++# __restore_processor_state(): https://bugs.llvm.org/show_bug.cgi?id=47479
++CFLAGS_REMOVE_cpu.o := $(CC_FLAGS_LTO)
++
+ obj-$(CONFIG_PM_SLEEP)		+= cpu.o
+ obj-$(CONFIG_HIBERNATION)	+= hibernate_$(BITS).o hibernate_asm_$(BITS).o hibernate.o

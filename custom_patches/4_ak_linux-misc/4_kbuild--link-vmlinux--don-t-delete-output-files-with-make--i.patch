@@ -1,0 +1,33 @@
+From d69e61fe4789092fc527ec5c80002738ae4311b5 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Mon, 6 Jul 2020 17:36:07 -0700
+Subject: kbuild, link-vmlinux: Don't delete output files with make -i
+
+make -i is useful to see output files which normally get deleted on an
+error.  Make this work with link-vmlinux.sh too. Don't delete the output
+files on error when make -i is used.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/link-vmlinux.sh | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index f90ebcdd394d7..2b8543bbdb311 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -259,6 +259,11 @@ sorttable()
+ # Delete output files in case of error
+ cleanup()
+ {
++	# don't delete for make -i
++	case "$MFLAGS" in
++	*-i*) return ;;
++	esac
++
+ 	rm -f .btf.*
+ 	rm -f .tmp_System.map
+ 	rm -f .tmp_vmlinux*
+-- 
+cgit 1.2.3-1.el7
+

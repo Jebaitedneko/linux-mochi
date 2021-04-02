@@ -1,0 +1,141 @@
+From b1e9c2f8cb2acff5687e48b741d6d29205bd6c92 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Tue, 30 Jun 2020 23:27:08 -0700
+Subject: kbuild, genksyms: Support C output in genksyms
+
+Support generating full C code for the CRC symbols instead of a
+combination of inline assembler linker scripts.
+
+That allows followon patches to avoid incremental linking.
+
+This can be enabled with the new -c option.
+
+This requires a new variant of the export keyword that also specifies
+the section instead of just the symbol name, because that is needed
+for the full symbol.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/genksyms/genksyms.c | 27 +++++++++++++++++++--------
+ scripts/genksyms/genksyms.h |  2 +-
+ scripts/genksyms/parse.y    |  6 ++++--
+ 3 files changed, 24 insertions(+), 11 deletions(-)
+
+diff --git a/scripts/genksyms/genksyms.c b/scripts/genksyms/genksyms.c
+index 23eff234184f3..be47e6d30c82b 100644
+--- a/scripts/genksyms/genksyms.c
++++ b/scripts/genksyms/genksyms.c
+@@ -33,7 +33,7 @@ char *cur_filename, *source_file;
+ int in_source_file;
+ 
+ static int flag_debug, flag_dump_defs, flag_reference, flag_dump_types,
+-	   flag_preserve, flag_warnings, flag_rel_crcs;
++	   flag_preserve, flag_warnings, flag_rel_crcs, flag_c_output;
+ 
+ static int errors;
+ static int nsyms;
+@@ -631,7 +631,7 @@ static unsigned long expand_and_crc_sym(struct symbol *sym, unsigned long crc)
+ 	return crc;
+ }
+ 
+-void export_symbol(const char *name)
++void export_symbol(const char *sec, const char *name)
+ {
+ 	struct symbol *sym;
+ 
+@@ -681,10 +681,15 @@ void export_symbol(const char *name)
+ 			fputs(">\n", debugfile);
+ 
+ 		/* Used as a linker script. */
+-		printf(!flag_rel_crcs ? "__crc_%s = 0x%08lx;\n" :
+-		       "SECTIONS { .rodata : ALIGN(4) { "
+-		       "__crc_%s = .; LONG(0x%08lx); } }\n",
+-		       name, crc);
++		if (flag_c_output)
++			printf("int __attribute__((section(\".kcrctab%.*s%s\"))) __crc_%s = %#lx;\n",
++					sec[0] ? (int)strlen(sec) - 2 : 0, sec[0] ? sec + 1 : sec,
++					name, name, crc);
++		else
++			printf(!flag_rel_crcs ? "__crc_%s = 0x%08lx;\n" :
++				"SECTIONS { .rodata : ALIGN(4) { "
++				"__crc_%s = .; LONG(0x%08lx); } }\n",
++				name, crc);
+ 	}
+ }
+ 
+@@ -734,6 +739,7 @@ static void genksyms_usage(void)
+ 	      "  -h, --help            Print this message\n"
+ 	      "  -V, --version         Print the release version\n"
+ 	      "  -R, --relative-crc    Emit section relative symbol CRCs\n"
++	      "  -c, --c-output	       Generate C output\n"
+ #else				/* __GNU_LIBRARY__ */
+ 	      "  -s                    Select symbol prefix\n"
+ 	      "  -d                    Increment the debug level (repeatable)\n"
+@@ -746,6 +752,7 @@ static void genksyms_usage(void)
+ 	      "  -h                    Print this message\n"
+ 	      "  -V                    Print the release version\n"
+ 	      "  -R                    Emit section relative symbol CRCs\n"
++	      "  -c		       Generate C output\n"
+ #endif				/* __GNU_LIBRARY__ */
+ 	      , stderr);
+ }
+@@ -767,13 +774,14 @@ int main(int argc, char **argv)
+ 		{"version", 0, 0, 'V'},
+ 		{"help", 0, 0, 'h'},
+ 		{"relative-crc", 0, 0, 'R'},
++		{"c-output", 0, 0, 'c'},
+ 		{0, 0, 0, 0}
+ 	};
+ 
+-	while ((o = getopt_long(argc, argv, "s:dwqVDr:T:phR",
++	while ((o = getopt_long(argc, argv, "s:dwqVDr:T:phRc",
+ 				&long_opts[0], NULL)) != EOF)
+ #else				/* __GNU_LIBRARY__ */
+-	while ((o = getopt(argc, argv, "s:dwqVDr:T:phR")) != EOF)
++	while ((o = getopt(argc, argv, "s:dwqVDr:T:phRc")) != EOF)
+ #endif				/* __GNU_LIBRARY__ */
+ 		switch (o) {
+ 		case 'd':
+@@ -799,6 +807,9 @@ int main(int argc, char **argv)
+ 				return 1;
+ 			}
+ 			break;
++		case 'c':
++			flag_c_output = 1;
++			break;
+ 		case 'T':
+ 			flag_dump_types = 1;
+ 			dumpfile = fopen(optarg, "w");
+diff --git a/scripts/genksyms/genksyms.h b/scripts/genksyms/genksyms.h
+index 2bcdb9bebab40..f8fe2e9a418eb 100644
+--- a/scripts/genksyms/genksyms.h
++++ b/scripts/genksyms/genksyms.h
+@@ -53,7 +53,7 @@ extern int in_source_file;
+ struct symbol *find_symbol(const char *name, enum symbol_type ns, int exact);
+ struct symbol *add_symbol(const char *name, enum symbol_type type,
+ 			  struct string_list *defn, int is_extern);
+-void export_symbol(const char *);
++void export_symbol(const char *, const char *);
+ 
+ void free_node(struct string_list *list);
+ void free_list(struct string_list *s, struct string_list *e);
+diff --git a/scripts/genksyms/parse.y b/scripts/genksyms/parse.y
+index 8e9b5e69e8f01..0b698ed21754d 100644
+--- a/scripts/genksyms/parse.y
++++ b/scripts/genksyms/parse.y
+@@ -492,8 +492,10 @@ asm_phrase_opt:
+ 	;
+ 
+ export_definition:
+-	EXPORT_SYMBOL_KEYW '(' IDENT ')' ';'
+-		{ export_symbol((*$3)->string); $$ = $5; }
++	EXPORT_SYMBOL_KEYW '(' STRING ',' IDENT ')' ';'
++		{ export_symbol((*$3)->string, (*$5)->string); $$ = $7; }
++	| EXPORT_SYMBOL_KEYW '(' IDENT ')' ';'
++		{ export_symbol("", (*$3)->string); $$ = $5; }
+ 	;
+ 
+ /* Ignore any module scoped _Static_assert(...) */
+-- 
+cgit 1.2.3-1.el7
+

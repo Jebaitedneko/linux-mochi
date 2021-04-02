@@ -1,0 +1,36 @@
+From be960c7e45b100aa3ac82ef4cdf828ac17eaa030 Mon Sep 17 00:00:00 2001
+From: Alexander Lobakin <alobakin@pm.me>
+Date: Thu, 21 Jan 2021 18:45:55 +0000
+Subject: [PATCH] kbuild: prevent CC_FLAGS_LTO self-bloating on recursive
+ rebuilds
+
+CC_FLAGS_LTO gets initialized only via +=, never with := or =.
+When building with CONFIG_TRIM_UNUSED_KSYMS, Kbuild may perform
+several kernel rebuilds to satisfy symbol dependencies. In this
+case, value of CC_FLAGS_LTO is concatenated each time, which
+triggers a full rebuild.
+Initialize it with := to fix this.
+
+Fixes: dc5723b02e52 ("kbuild: add support for Clang LTO")
+Signed-off-by: Alexander Lobakin <alobakin@pm.me>
+---
+ Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index a563f650c9e3..d21a68797f04 100644
+--- a/Makefile
++++ b/Makefile
+@@ -900,10 +900,10 @@ endif
+ 
+ ifdef CONFIG_LTO_CLANG
+ ifdef CONFIG_LTO_CLANG_THIN
+-CC_FLAGS_LTO	+= -flto=thin -fsplit-lto-unit
++CC_FLAGS_LTO	:= -flto=thin -fsplit-lto-unit
+ KBUILD_LDFLAGS	+= --thinlto-cache-dir=$(extmod-prefix).thinlto-cache
+ else
+-CC_FLAGS_LTO	+= -flto
++CC_FLAGS_LTO	:= -flto
+ endif
+ CC_FLAGS_LTO	+= -fvisibility=hidden
+ endif

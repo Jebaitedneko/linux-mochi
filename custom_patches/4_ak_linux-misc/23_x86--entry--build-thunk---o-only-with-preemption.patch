@@ -1,0 +1,35 @@
+From d37c1ff0c49984e544b8d6e08c4c82f21196f1fa Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sun, 28 Mar 2021 01:47:54 -0700
+Subject: x86, entry: Build thunk_*.o only with preemption
+
+thunk_*.o contains the thunks for preemption. It is empty
+on systems without CONFIG_PREEMPTION. At least on a LTO build
+objtool complains that there is no symbol table for the empty
+file.
+
+Only build thunk_*.o with CONFIG_PREEMPTION.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/entry/Makefile | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/entry/Makefile b/arch/x86/entry/Makefile
+index 08bf95dbc9112..6c21426e9cf39 100644
+--- a/arch/x86/entry/Makefile
++++ b/arch/x86/entry/Makefile
+@@ -21,7 +21,9 @@ CFLAGS_syscall_64.o		+= $(call cc-option,-Wno-override-init,)
+ CFLAGS_syscall_32.o		+= $(call cc-option,-Wno-override-init,)
+ CFLAGS_syscall_x32.o		+= $(call cc-option,-Wno-override-init,)
+ 
+-obj-y				:= entry_$(BITS).o thunk_$(BITS).o syscall_$(BITS).o
++obj-$(CONFIG_PREEMPTION)	+= thunk_$(BITS).o
++
++obj-y				:= entry_$(BITS).o syscall_$(BITS).o
+ obj-y				+= common.o
+ 
+ obj-y				+= vdso/
+-- 
+cgit 1.2.3-1.el7
+

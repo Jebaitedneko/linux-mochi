@@ -1,0 +1,49 @@
+From 25e89e4a8bf6c651e30472c9baf35edf09204a91 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 11 Dec 2020 10:46:23 -0800
+Subject: [PATCH] kbuild: lto: add a default list of used symbols
+
+With CONFIG_LTO_CLANG, LLVM bitcode has not yet been compiled into a
+binary when the .mod files are generated, which means they don't yet
+contain references to certain symbols that will be present in the final
+binaries. This includes intrinsic functions, such as memcpy, memmove,
+and memset [1], and stack protector symbols [2]. This change adds a
+default symbol list to use with CONFIG_TRIM_UNUSED_KSYMS when Clang's
+LTO is used.
+
+[1] https://llvm.org/docs/LangRef.html#standard-c-c-library-intrinsics
+[2] https://llvm.org/docs/LangRef.html#llvm-stackprotector-intrinsic
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20201211184633.3213045-7-samitolvanen@google.com
+---
+ init/Kconfig                    | 1 +
+ scripts/lto-used-symbollist.txt | 5 +++++
+ 2 files changed, 6 insertions(+)
+ create mode 100644 scripts/lto-used-symbollist.txt
+
+diff --git a/init/Kconfig b/init/Kconfig
+index 29ad68325028..c6cbe3824943 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -2296,6 +2296,7 @@ config TRIM_UNUSED_KSYMS
+ config UNUSED_KSYMS_WHITELIST
+ 	string "Whitelist of symbols to keep in ksymtab"
+ 	depends on TRIM_UNUSED_KSYMS
++	default "scripts/lto-used-symbollist.txt" if LTO_CLANG
+ 	help
+ 	  By default, all unused exported symbols will be un-exported from the
+ 	  build when TRIM_UNUSED_KSYMS is selected.
+diff --git a/scripts/lto-used-symbollist.txt b/scripts/lto-used-symbollist.txt
+new file mode 100644
+index 000000000000..38e7bb9ebaae
+--- /dev/null
++++ b/scripts/lto-used-symbollist.txt
+@@ -0,0 +1,5 @@
++memcpy
++memmove
++memset
++__stack_chk_fail
++__stack_chk_guard

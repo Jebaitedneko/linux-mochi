@@ -1,0 +1,30 @@
+From 7bd5400ac9de577b8578dcbadcf046ab266468cd Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Tue, 13 Oct 2020 15:54:56 -0700
+Subject: x86, lto: Disable live patching with LTO
+
+Not supported by gcc 10 so far, causes compiler errors.
+
+Other than the compiler support there shouldn't be any barriers for live
+patching LTOed kernels.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ kernel/livepatch/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kernel/livepatch/Kconfig b/kernel/livepatch/Kconfig
+index 53d51ed619a3d..a255da85458e1 100644
+--- a/kernel/livepatch/Kconfig
++++ b/kernel/livepatch/Kconfig
+@@ -12,6 +12,7 @@ config LIVEPATCH
+ 	depends on KALLSYMS_ALL
+ 	depends on HAVE_LIVEPATCH
+ 	depends on !TRIM_UNUSED_KSYMS
++	depends on !LTO # not supported in gcc 10
+ 	help
+ 	  Say Y here if you want to support kernel live patching.
+ 	  This option has no runtime impact until a kernel "patch"
+-- 
+cgit 1.2.3-1.el7
+

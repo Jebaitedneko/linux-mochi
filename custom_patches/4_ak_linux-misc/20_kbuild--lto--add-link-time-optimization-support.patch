@@ -1,0 +1,538 @@
+From f82233a8b0c0561481632daefc6536d115beca10 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Mon, 3 Sep 2012 21:18:23 +0200
+Subject: Kbuild, lto: Add Link Time Optimization support
+
+With LTO gcc will do whole program optimizations for
+the whole kernel and each module. This increases compile time,
+but can generate faster and smaller code and allows
+the compiler to do global checking. For example the compiler
+can complain now about type mismatches for symbols between
+different files.
+
+LTO allows gcc to inline functions between different files and
+do various other optimization across the whole binary.
+
+The LTO patches have been used for many years by various
+users, mostly to make their kernel smaller. This version
+has a lot of outdated cruft dropped and doesn't need
+any special tool chain (except for new enough) anymore.
+
+This adds the basic Kbuild plumbing for LTO:
+
+- In Kbuild add a new scripts/Makefile.lto that checks
+the tool chain and does all the necessary setup.
+LTO has more requirements on the toolchain than a normal build.
+When anything fails disable LTO
+- Add a new LDFINAL variable that controls the final link
+for vmlinux or module. In this case we call gcc-ld instead
+of ld, to run the LTO step.
+
+- Kconfigs:
+Since LTO with allyesconfig needs more than 4G of memory (~8G)
+and has the potential to makes people's system swap to death.
+I used a nested config that ensures that a simple
+allyesconfig disables LTO. It has to be explicitely
+enabled.
+
+For more information see Documentation/kbuild/lto-build.rst
+
+Thanks to HJ Lu, Joe Mario, Honza Hubicka, Richard Guenther,
+Don Zickus, Changlong Xie, Gleb Schukin, various github contributors,
+ who helped with this project (and probably some more who I forgot, sorry)
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ Documentation/kbuild/lto-build.rst | 74 ++++++++++++++++++++++++++++++++++++++
+ Makefile                           | 11 +++---
+ init/Kconfig                       | 73 +++++++++++++++++++++++++++++++++++++
+ scripts/Makefile.build             | 12 ++++---
+ scripts/Makefile.lib               |  4 ++-
+ scripts/Makefile.lto               | 68 +++++++++++++++++++++++++++++++++++
+ scripts/Makefile.modfinal          |  4 +--
+ scripts/link-vmlinux.sh            | 50 +++++++++++++++++++++-----
+ scripts/mkcompile_h                |  2 +-
+ 9 files changed, 275 insertions(+), 23 deletions(-)
+ create mode 100644 Documentation/kbuild/lto-build.rst
+ create mode 100644 scripts/Makefile.lto
+
+diff --git a/Documentation/kbuild/lto-build.rst b/Documentation/kbuild/lto-build.rst
+new file mode 100644
+index 0000000000000..23d514762b6f9
+--- /dev/null
++++ b/Documentation/kbuild/lto-build.rst
+@@ -0,0 +1,74 @@
++=====================================================
++gcc link time optimization (LTO) for the Linux kernel
++=====================================================
++
++Link Time Optimization allows the compiler to optimize the complete program
++instead of just each file.
++
++The compiler can inline functions between files and do various other global
++optimizations, like specializing functions for common parameters,
++determing when global variables are clobbered, making functions pure/const,
++propagating constants globally, removing unneeded data and others.
++
++It will also drop unused functions which can make the kernel
++image smaller in some circumstances, in particular for small kernel
++configurations.
++
++For small monolithic kernels it can throw away unused code very effectively
++(especially when modules are disabled) and usually shrinks
++the code size.
++
++Build time and memory consumption at build time will increase, depending
++on the size of the largest binary. Modular kernels are less affected.
++With LTO incremental builds are less incremental, as always the whole
++binary needs to be re-optimized (but not re-parsed)
++
++Oopses can be somewhat more difficult to read, due to the more aggressive
++inlining: it helps to use scripts/faddr2line.
++
++Normal "reasonable" builds work with less than 4GB of RAM, but very large
++configurations like allyesconfig typically need more memory. The actual
++memory needed depends on the available memory (gcc sizes its garbage
++collector pools based on that or on the ulimit -m limits) and
++the compiler version.
++
++Configuration:
++--------------
++- Enable CONFIG_LTO_MENU and then disable CONFIG_LTO_DISABLE.
++This is mainly to not have allyesconfig default to LTO.
++
++Requirements:
++-------------
++- Enough memory: 4GB for a standard build, more for allyesconfig
++The peak memory usage happens single threaded (when lto-wpa merges types),
++so dialing back -j options will not help much.
++
++A 32bit hosted compiler is unlikely to work due to the memory requirements.
++You can however build a kernel targeted at 32bit on a 64bit host.
++
++FAQs:
++-----
++Q: I get a section type attribute conflict
++A: Usually because of someone doing
++const __initdata (should be const __initconst) or const __read_mostly
++(should be just const). Check both symbols reported by gcc.
++
++References:
++-----------
++
++Presentation on Kernel LTO
++(note, performance numbers/details outdated.  In particular gcc 4.9 fixed
++most of the build time problems):
++http://halobates.de/kernel-lto.pdf
++
++Generic gcc LTO:
++http://www.ucw.cz/~hubicka/slides/labs2013.pdf
++http://www.hipeac.net/system/files/barcelona.pdf
++
++Somewhat outdated too:
++http://gcc.gnu.org/projects/lto/lto.pdf
++http://gcc.gnu.org/projects/lto/whopr.pdf
++
++Happy Link-Time-Optimizing!
++
++Andi Kleen
+diff --git a/Makefile b/Makefile
+index de1acaefe87e6..b250c536894f7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -437,6 +437,8 @@ STRIP		= llvm-strip
+ else
+ CC		= $(CROSS_COMPILE)gcc
+ LD		= $(CROSS_COMPILE)ld
++REALLD		= $(LD)
++LDFINAL		= $(LD)
+ AR		= $(CROSS_COMPILE)ar
+ NM		= $(CROSS_COMPILE)nm
+ OBJCOPY		= $(CROSS_COMPILE)objcopy
+@@ -508,7 +510,7 @@ CLANG_FLAGS :=
+ export ARCH SRCARCH CONFIG_SHELL BASH HOSTCC KBUILD_HOSTCFLAGS CROSS_COMPILE LD CC
+ export CPP AR NM STRIP OBJCOPY OBJDUMP READELF PAHOLE RESOLVE_BTFIDS LEX YACC AWK INSTALLKERNEL
+ export PERL PYTHON3 CHECK CHECKFLAGS MAKE UTS_MACHINE HOSTCXX
+-export KGZIP KBZIP2 KLZOP LZMA LZ4 XZ ZSTD
++export KGZIP KBZIP2 KLZOP LZMA LZ4 XZ ZSTD LDFINAL REALLD
+ export KBUILD_HOSTCXXFLAGS KBUILD_HOSTLDFLAGS KBUILD_HOSTLDLIBS LDFLAGS_MODULE
+ 
+ export KBUILD_CPPFLAGS NOSTDINC_FLAGS LINUXINCLUDE OBJCOPYFLAGS KBUILD_LDFLAGS
+@@ -956,13 +958,10 @@ include-$(CONFIG_KCSAN)		+= scripts/Makefile.kcsan
+ include-$(CONFIG_UBSAN)		+= scripts/Makefile.ubsan
+ include-$(CONFIG_KCOV)		+= scripts/Makefile.kcov
+ include-$(CONFIG_GCC_PLUGINS)	+= scripts/Makefile.gcc-plugins
++include-$(CONFIG_LTO)		+= scripts/Makefile.lto
+ 
+ include $(addprefix $(srctree)/, $(include-y))
+ 
+-# scripts/Makefile.gcc-plugins is intentionally included last.
+-# Do not add $(call cc-option,...) below this line. When you build the kernel
+-# from the clean source tree, the GCC plugins do not exist at this point.
+-
+ # Add user supplied CPPFLAGS, AFLAGS and CFLAGS as the last assignments
+ KBUILD_CPPFLAGS += $(KCPPFLAGS)
+ KBUILD_AFLAGS   += $(KAFLAGS)
+@@ -1158,7 +1157,7 @@ ARCH_POSTLINK := $(wildcard $(srctree)/arch/$(SRCARCH)/Makefile.postlink)
+ 
+ # Final link of vmlinux with optional arch pass after final link
+ cmd_link-vmlinux =                                                 \
+-	$(CONFIG_SHELL) $< "$(LD)" "$(KBUILD_LDFLAGS)" "$(LDFLAGS_vmlinux)";    \
++	$(CONFIG_SHELL) $< "$(LDFINAL)" "$(KBUILD_LDFLAGS)" "$(LDFLAGS_vmlinux)";    \
+ 	$(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
+ 
+ vmlinux: scripts/link-vmlinux.sh autoksyms_recursive $(vmlinux-deps) FORCE
+diff --git a/init/Kconfig b/init/Kconfig
+index 29ad683250288..c8d4bed8150e2 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1357,6 +1357,79 @@ config LD_ORPHAN_WARN
+ 	depends on !LD_IS_LLD || LLD_VERSION >= 110000
+ 	depends on $(ld-option,--orphan-handling=warn)
+ 
++config ARCH_SUPPORTS_LTO
++	bool
++
++# Some ar versions leak file descriptors when using the LTO
++# plugin and cause strange errors when ulimit -n is too low.
++# Pick an arbitrary threshold, which should be enough for most
++# kernel configs. This was a regression that is only
++# in some transient binutils version, so either older or
++# new enough is ok.
++# This might not be the exact range with this bug.
++config BAD_AR
++	depends on LD_VERSION = 230000000
++	depends on $(shell,ulimit -n) < 4000
++	def_bool y
++
++config LTO_MENU
++	bool "Enable gcc link time optimization (LTO)"
++	depends on ARCH_SUPPORTS_LTO
++# for now. Does LLVM need the gcc infrastructure at all?
++	depends on CC_IS_GCC
++# 4.7 works mostly, but it sometimes loses symbols on large builds
++# This can be worked around by marking those symbols visible,
++# but that is fairly ugly and the problem is gone with 4.8
++# 4.8 was very slow
++# 4.9 was missing __attribute__((noreorder)) for ordering initcalls,
++# and needed -fno-toplevel-reorder, which can lead to missing symbols
++# 5.0 segfaults with newer kernels
++# we now rely on -flinker-output=nolto-rel, which requires gcc 9
++	depends on GCC_VERSION >= 90000
++# binutils before 2.27 has various problems with plugins
++	depends on LD_VERSION >= 227000000
++	depends on !BAD_AR
++	help
++	  Enable whole program (link time) optimizations (LTO) for the the
++	  whole kernel and each module.  This usually increases compile time,
++	  but can lead to better code. It allows the compiler to inline
++	  functions between different files and do other global optimization,
++	  like propagating constants between functions or optimize unused
++	  function arguments and other optimizations.
++
++	  It also allows the compiler to drop unused code.
++
++	  With this option the compiler will also do some global checking over
++	  different source files.
++
++	  This requires a gcc 9 or later compiler and binutils >= 2.27.
++
++	  On larger non modular configurations this may need more than 4GB of
++	  RAM for the link phase.
++
++	  For more information see Documentation/kbild/lto-build.rst
++
++config LTO_DISABLE
++         bool "Disable LTO again"
++         depends on LTO_MENU
++         default n
++         help
++           This option is merely here so that allyesconfig or allmodconfig do
++           not enable LTO. If you want to actually use LTO do not enable.
++
++config LTO
++	bool
++	default y
++	depends on LTO_MENU && !LTO_DISABLE
++
++config LTO_CP_CLONE
++	bool "Allow aggressive cloning for function specialization"
++	depends on LTO
++	help
++	  Allow the compiler to clone and specialize functions for specific
++	  arguments when it determines these arguments are very commonly
++	  called.  Experimential. Will increase text size.
++
+ config SYSCTL
+ 	bool
+ 
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index 4c058f12dd73c..0d7f82599ce85 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -171,7 +171,7 @@ cmd_modversions_c =								\
+ 		$(call cmd_gensymtypes_c,$(KBUILD_SYMTYPES),$(@:.o=.symtypes))	\
+ 		    > $(@D)/.tmp_$(@F:.o=.ver);					\
+ 										\
+-		$(LD) $(KBUILD_LDFLAGS) -r -o $(@D)/.tmp_$(@F) $@ 		\
++		$(LDFINAL) $(KBUILD_LDFLAGS) -r -o $(@D)/.tmp_$(@F) $@		\
+ 			-T $(@D)/.tmp_$(@F:.o=.ver);				\
+ 		mv -f $(@D)/.tmp_$(@F) $@;					\
+ 		rm -f $(@D)/.tmp_$(@F:.o=.ver);					\
+@@ -288,7 +288,8 @@ $(obj)/%.mod: $(obj)/%.o FORCE
+ 	$(call if_changed,mod)
+ 
+ quiet_cmd_cc_lst_c = MKLST   $@
+-      cmd_cc_lst_c = $(CC) $(c_flags) -g -c -o $*.o $< && \
++      cmd_cc_lst_c = $(if $(CONFIG_LTO),$(warning Listing in LTO mode does not match final binary)) \
++		     $(CC) $(c_flags) -g -c -o $*.o $< && \
+ 		     $(CONFIG_SHELL) $(srctree)/scripts/makelst $*.o \
+ 				     System.map $(OBJDUMP) > $@
+ 
+@@ -349,7 +350,7 @@ cmd_modversions_S =								\
+ 		$(call cmd_gensymtypes_S,$(KBUILD_SYMTYPES),$(@:.o=.symtypes))	\
+ 		    > $(@D)/.tmp_$(@F:.o=.ver);					\
+ 										\
+-		$(LD) $(KBUILD_LDFLAGS) -r -o $(@D)/.tmp_$(@F) $@ 		\
++		$(LDFINAL) $(KBUILD_LDFLAGS) -r $(KBUILD_MOD_LDFLAGS) -o $(@D)/.tmp_$(@F) $@	\
+ 			-T $(@D)/.tmp_$(@F:.o=.ver);				\
+ 		mv -f $(@D)/.tmp_$(@F) $@;					\
+ 		rm -f $(@D)/.tmp_$(@F:.o=.ver);					\
+@@ -423,8 +424,9 @@ $(obj)/lib.a: $(lib-y) FORCE
+ # Do not replace $(filter %.o,^) with $(real-prereqs). When a single object
+ # module is turned into a multi object module, $^ will contain header file
+ # dependencies recorded in the .*.cmd file.
+-quiet_cmd_link_multi-m = LD [M]  $@
+-      cmd_link_multi-m = $(LD) $(ld_flags) -r -o $@ $(filter %.o,$^)
++quiet_cmd_link_multi-m = LDFINAL [M]  $@
++      cmd_link_multi-m = $(LDFINAL) $(ld_flags) -r $(KBUILD_MOD_LDFLAGS) \
++				-o $@ $(filter %.o,$^)
+ 
+ $(multi-used-m): FORCE
+ 	$(call if_changed,link_multi-m)
+diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
+index 213677a5ed33e..e8ef7c900c16d 100644
+--- a/scripts/Makefile.lib
++++ b/scripts/Makefile.lib
+@@ -188,11 +188,13 @@ endif
+ endif
+ 
+ part-of-module = $(if $(filter $(basename $@).o, $(real-obj-m)),y)
++single-file-module = $(if $(words $(obj-m)),1,,y)
+ quiet_modtag = $(if $(part-of-module),[M],   )
+ 
+ modkern_cflags =                                          \
+ 	$(if $(part-of-module),                           \
+-		$(KBUILD_CFLAGS_MODULE) $(CFLAGS_MODULE), \
++                $(if $(single-file-module),$(DISABLE_LTO))   \
++                $(KBUILD_CFLAGS_MODULE) $(CFLAGS_MODULE), \
+ 		$(KBUILD_CFLAGS_KERNEL) $(CFLAGS_KERNEL) $(modfile_flags))
+ 
+ modkern_aflags = $(if $(part-of-module),				\
+diff --git a/scripts/Makefile.lto b/scripts/Makefile.lto
+new file mode 100644
+index 0000000000000..dcaaedadf9ce8
+--- /dev/null
++++ b/scripts/Makefile.lto
+@@ -0,0 +1,68 @@
++#
++# Support for gcc link time optimization
++#
++
++DISABLE_LTO :=
++LTO_CFLAGS :=
++KBUILD_MOD_LDFLAGS :=
++KBUILD_MODPOST_LDFLAGS :=
++
++export DISABLE_LTO
++export LTO_CFLAGS
++export KBUILD_MOD_LDFLAGS
++export KBUILD_MODPOST_LDFLAGS
++
++ifdef CONFIG_LTO
++	LTO_CFLAGS := -flto
++	LTO_FINAL_CFLAGS := -fuse-linker-plugin
++
++	# gcc 8.x doesn't generate debuginfo if we don't
++	# specify -g on the final linking command line.
++	LTO_FINAL_CFLAGS += $(filter -g%, $(KBUILD_CFLAGS))
++
++# would be needed to support < 5.0
++#	LTO_FINAL_CFLAGS += -fno-toplevel-reorder
++
++	LTO_FINAL_CFLAGS += -flto=jobserver
++
++	KBUILD_MOD_LDFLAGS += -flinker-output=nolto-rel
++
++	# do full LTO before main kernel modpost
++	# XXX should switch to running modpost on the final executable
++	# to avoid the time overhead
++	KBUILD_MODPOST_LDFLAGS += -flinker-output=nolto-rel
++
++	# don't compile everything twice
++	# requires plugin ar
++	LTO_CFLAGS += -fno-fat-lto-objects
++
++	# Used to disable LTO for specific files (e.g. vdso)
++	DISABLE_LTO := -fno-lto
++
++	LTO_FINAL_CFLAGS += ${LTO_CFLAGS} -fwhole-program
++
++	KBUILD_CFLAGS += ${LTO_CFLAGS}
++
++ifdef CONFIG_LTO_CP_CLONE
++	LTO_FINAL_CFLAGS += -fipa-cp-clone
++endif
++
++	# allow extra flags from command line
++	LTO_FINAL_CFLAGS += ${LTO_EXTRA_CFLAGS}
++
++	# For LTO we need to use gcc to do the linking, not ld
++	# directly. Use a wrapper to convert the ld command line
++	# to gcc
++	LDFINAL := ${CONFIG_SHELL} ${srctree}/scripts/gcc-ld \
++                  ${LTO_FINAL_CFLAGS}
++
++	# LTO gcc creates a lot of files in TMPDIR, and with /tmp as tmpfs
++	# it's easy to drive the machine OOM. Use the object directory
++	# instead for temporaries.
++	TMPDIR ?= $(objtree)
++	export TMPDIR
++
++	# use plugin aware tools
++	AR = $(CROSS_COMPILE)gcc-ar
++	NM = $(CROSS_COMPILE)gcc-nm
++endif # CONFIG_LTO
+diff --git a/scripts/Makefile.modfinal b/scripts/Makefile.modfinal
+index d49ec001825dd..6ad4a89b14874 100644
+--- a/scripts/Makefile.modfinal
++++ b/scripts/Makefile.modfinal
+@@ -30,9 +30,9 @@ quiet_cmd_cc_o_c = CC [M]  $@
+ 
+ ARCH_POSTLINK := $(wildcard $(srctree)/arch/$(SRCARCH)/Makefile.postlink)
+ 
+-quiet_cmd_ld_ko_o = LD [M]  $@
++quiet_cmd_ld_ko_o = LDFINAL [M]  $@
+       cmd_ld_ko_o =                                                     \
+-	$(LD) -r $(KBUILD_LDFLAGS)					\
++	$(LDFINAL) -r $(KBUILD_MOD_LDFLAGS) $(KBUILD_LDFLAGS)		\
+ 		$(KBUILD_LDFLAGS_MODULE) $(LDFLAGS_MODULE)		\
+ 		-T scripts/module.lds -o $@ $(filter %.o, $^);		\
+ 	$(if $(ARCH_POSTLINK), $(MAKE) -f $(ARCH_POSTLINK) $@, true)
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index 7961820c10a70..e76058a5dd723 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -56,7 +56,7 @@ modpost_link()
+ 		${KBUILD_VMLINUX_LIBS}				\
+ 		--end-group"
+ 
+-	${LD} ${KBUILD_LDFLAGS} -r -o ${1} ${objects}
++	${LDFINAL} ${KBUILD_LDFLAGS} -r ${KBUILD_MODPOST_LDFLAGS} -o ${1} ${objects}
+ }
+ 
+ objtool_link()
+@@ -92,15 +92,17 @@ vmlinux_link()
+ 	local objects
+ 	local strip_debug
+ 
+-	info LD ${output}
++	info LDFINAL ${output}
+ 
+ 	# skip output file argument
+ 	shift
+ 
+ 	# The kallsyms linking does not need debug symbols included.
+-	# except for LTO because gcc 10 LTO changes the layout of the data segment
+-	# with --strip-debug
+-	if [ "$output" != "${output#.tmp_vmlinux.kallsyms}" -a -z "$CONFIG_LTO" ] ; then
++	# except for gcc LTO because gcc 10 LTO changes the layout of the
++	# data segment with --strip-debug
++	if [ "$output" != "${output#.tmp_vmlinux.kallsyms}" -a 	\
++	     -z "$CONFIG_LTO"  -a 				\
++	     -n "$CONFIG_CC_IS_GCC" ] ; then
+ 		strip_debug=-Wl,--strip-debug
+ 	fi
+ 
+@@ -113,7 +115,7 @@ vmlinux_link()
+ 			--end-group				\
+ 			${@}"
+ 
+-		${LD} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
++		${LDFINAL} ${KBUILD_LDFLAGS} ${LDFLAGS_vmlinux}	\
+ 			${strip_debug#-Wl,}			\
+ 			-o ${output}				\
+ 			-T ${lds} ${objects}
+@@ -189,7 +191,38 @@ kallsyms()
+ 	fi
+ 
+ 	info KSYMS ${2}
+-	${NM} -n ${1} | scripts/kallsyms ${kallsymopt} > ${2}
++	(
++	if [ -n "$CONFIG_LTO" -a -n "$CONFIG_KALLSYMS_SINGLE" -a -n "$CONFIG_CC_IS_GCC" ] &&
++		( ${OBJDUMP} -h ${1} | grep -q gnu\.lto) ; then
++        # workaround for slim LTO gcc-nm not outputing static symbols
++        # http://gcc.gnu.org/PR60016
++        # generate a fake symbol table based on the LTO function sections.
++        # This unfortunately "knows" about the internal LTO file format
++        # and only works for functions
++
++	# read the function names directly from the LTO object
++	objdump -h ${1} |
++		awk '/gnu\.lto_[a-z]/ {
++			gsub(/\.gnu\.lto_/,"");
++			gsub(/\..*/, "");
++			print "0 t " $2
++		     } '
++	# read the non LTO symbols with readelf (which doesn't use the LTO plugin,
++	# so we only get pure ELF symbols)
++	# readelf doesn't handle ar, so we have to expand the objects
++	echo ${1} | sed 's/ /\n/g' | grep built-in.a | while read i ; do
++		${AR} t $i | while read j ; do readelf -s $j ; done
++	done | awk 'NF >= 8 { print "0 t " $8 } '
++	# now handle the objects
++	echo ${1} | sed 's/ /\n/g' | grep '\.o$' | while read i ; do
++		readelf -s $i
++	done | awk 'NF >= 8 {
++	if ($8 !~ /Name|__gnu_lto_slim|\.c(\.[0-9a-f]+)?/) { print "0 t " $8 }
++	}'
++	else
++		${NM} -n ${1}
++	fi
++	) | scripts/kallsyms ${kallsymopt} > ${2}
+ }
+ 
+ # Perform one step in kallsyms generation, including temporary linking of
+@@ -276,7 +309,7 @@ fi;
+ ${MAKE} -f "${srctree}/scripts/Makefile.build" obj=init need-builtin=1
+ 
+ #link vmlinux.o
+-info LD vmlinux.o
++info LDFINAL vmlinux.o
+ modpost_link vmlinux.o
+ objtool_link vmlinux.o
+ 
+@@ -340,6 +373,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
+ 	fi
+ fi
+ 
++info LDFINAL vmlinux
+ vmlinux_link vmlinux "${kallsymso}" ${btf_vmlinux_bin_o}
+ 
+ # fill in BTF IDs
+diff --git a/scripts/mkcompile_h b/scripts/mkcompile_h
+index 4ae735039daf2..a0555c4c83ca9 100755
+--- a/scripts/mkcompile_h
++++ b/scripts/mkcompile_h
+@@ -62,7 +62,7 @@ UTS_VERSION="$(echo $UTS_VERSION $CONFIG_FLAGS $TIMESTAMP | cut -b -$UTS_LEN)"
+   printf '#define LINUX_COMPILE_BY "%s"\n' "$LINUX_COMPILE_BY"
+   echo \#define LINUX_COMPILE_HOST \"$LINUX_COMPILE_HOST\"
+ 
+-  LD_VERSION=$($LD -v | head -n1 | sed 's/(compatible with [^)]*)//' \
++  LD_VERSION=$($REALLD -v | head -n1 | sed 's/(compatible with [^)]*)//' \
+ 		      | sed 's/[[:space:]]*$//')
+   printf '#define LINUX_COMPILER "%s"\n' "$CC_VERSION, $LD_VERSION"
+ } > .tmpcompile
+-- 
+cgit 1.2.3-1.el7
+

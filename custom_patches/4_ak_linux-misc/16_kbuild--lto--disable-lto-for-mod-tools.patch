@@ -1,0 +1,27 @@
+From 4e9a946edb9d979f909e3f932c2105d828ceee90 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sun, 28 Mar 2021 03:46:17 -0700
+Subject: Kbuild, lto: Disable LTO for mod tools
+
+The mod tools scan assembler for generating symbols, which doesn't work
+with LTO. Just disable LTO for scripts/mod/
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/mod/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/scripts/mod/Makefile b/scripts/mod/Makefile
+index 78071681d9242..82b7465570835 100644
+--- a/scripts/mod/Makefile
++++ b/scripts/mod/Makefile
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ OBJECT_FILES_NON_STANDARD := y
++KBUILD_CFLAGS 		  += $(DISABLE_LTO)
+ 
+ hostprogs-always-y	+= modpost mk_elfconfig
+ always-y		+= empty.o
+-- 
+cgit 1.2.3-1.el7
+

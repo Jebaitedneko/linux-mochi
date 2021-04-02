@@ -1,0 +1,54 @@
+From 4dc0b2ff40d677d9bdd537012c2f09e5118d016f Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 17 Jul 2020 12:04:27 -0700
+Subject: [PATCH] objtool: Don't autodetect vmlinux.o
+
+With LTO, we run objtool on vmlinux.o, but don't want noinstr
+validation. This change requires --vmlinux to be passed to objtool
+explicitly.
+
+Suggested-by: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+---
+ scripts/link-vmlinux.sh       | 2 +-
+ tools/objtool/builtin-check.c | 6 +-----
+ 2 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index c5919d5a0b4f..423a4106f0dd 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -106,7 +106,7 @@ objtool_link()
+ 	local objtoolopt;
+ 
+ 	if [ -n "${CONFIG_VMLINUX_VALIDATION}" ]; then
+-		objtoolopt="check"
++		objtoolopt="check --vmlinux"
+ 		if [ -z "${CONFIG_FRAME_POINTER}" ]; then
+ 			objtoolopt="${objtoolopt} --no-fp"
+ 		fi
+diff --git a/tools/objtool/builtin-check.c b/tools/objtool/builtin-check.c
+index e92e76f69176..facfc10bc5dc 100644
+--- a/tools/objtool/builtin-check.c
++++ b/tools/objtool/builtin-check.c
+@@ -41,7 +41,7 @@ const struct option check_options[] = {
+ 
+ int cmd_check(int argc, const char **argv)
+ {
+-	const char *objname, *s;
++	const char *objname;
+ 	struct objtool_file *file;
+ 	int ret;
+ 
+@@ -52,10 +52,6 @@ int cmd_check(int argc, const char **argv)
+ 
+ 	objname = argv[0];
+ 
+-	s = strstr(objname, "vmlinux.o");
+-	if (s && !s[9])
+-		vmlinux = true;
+-
+ 	file = objtool_open_read(objname);
+ 	if (!file)
+ 		return 1;

@@ -1,0 +1,44 @@
+From 087f85230b9f72d8e484958084a42da68b514cf9 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Sun, 9 Apr 2017 22:10:40 -0700
+Subject: lto: Use C version for SYSCALL_ALIAS / cond_syscall
+
+With LTO aliases get largely resolved in the compiler, not in the linker.
+
+Implement cond_syscall and SYSCALL_ALIAS in C to let the compiler
+understand the aliases so that it can resolve it properly.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ include/linux/linkage.h | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
+
+diff --git a/include/linux/linkage.h b/include/linux/linkage.h
+index dbf8506decca0..ce49e52dbe6d6 100644
+--- a/include/linux/linkage.h
++++ b/include/linux/linkage.h
+@@ -23,17 +23,13 @@
+ #endif
+ 
+ #ifndef cond_syscall
+-#define cond_syscall(x)	asm(				\
+-	".weak " __stringify(x) "\n\t"			\
+-	".set  " __stringify(x) ","			\
+-		 __stringify(sys_ni_syscall))
++#define cond_syscall(x)	\
++	extern long x(void) __attribute__((alias("sys_ni_syscall"), weak));
+ #endif
+ 
+ #ifndef SYSCALL_ALIAS
+-#define SYSCALL_ALIAS(alias, name) asm(			\
+-	".globl " __stringify(alias) "\n\t"		\
+-	".set   " __stringify(alias) ","		\
+-		  __stringify(name))
++#define SYSCALL_ALIAS(a, name) \
++	long a(void) __attribute__((alias(__stringify(name))))
+ #endif
+ 
+ #define __page_aligned_data	__section(".data..page_aligned") __aligned(PAGE_SIZE)
+-- 
+cgit 1.2.3-1.el7
+

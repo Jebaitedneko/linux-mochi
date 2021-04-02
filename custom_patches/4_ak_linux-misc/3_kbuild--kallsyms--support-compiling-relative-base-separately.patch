@@ -1,0 +1,64 @@
+From 150ee51bc4853ad0af671944d4d78571ccf7c3f4 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Tue, 7 Jul 2020 09:58:20 -0700
+Subject: kbuild, kallsyms: Support compiling relative_base separately
+
+The patching method used by single link kallsyms cannot handle
+relocations. They always get lost during the objcopy to a binary.
+
+There is a single relocation in a kallsyms file for the
+kallsyms_relative_base, normally pointing to _text.
+
+Add some ifdefs to the kallsyms output that allows compiling
+kallsyms_relative_base in a separate object file. The base
+does not change between kallsyms passes, so it can be always
+linked in from the initial version.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/kallsyms.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/scripts/kallsyms.c b/scripts/kallsyms.c
+index 30791ab231d87..92d89385c29c2 100644
+--- a/scripts/kallsyms.c
++++ b/scripts/kallsyms.c
+@@ -443,6 +443,7 @@ static void write_src(int *pad, int *opad)
+ 	printf("#define ALGN .balign 4\n");
+ 	printf("#endif\n");
+ 
++	printf("#ifndef NO_SYMS\n");
+ 	printf("\t.section .kallsyms, \"a\"\n");
+ 
+ 	if (!base_relative)
+@@ -497,13 +498,19 @@ static void write_src(int *pad, int *opad)
+ 		opad[PAD_OFF] = table_cnt + table_cnt/PAD_RATIO;
+ 	}
+ 	printf("\n");
++	printf("#endif\n");
+ 
+ 	if (base_relative) {
++		printf("#ifndef NO_REL\n");
++		printf("\t.section .rodata, \"a\"\n");
+ 		output_label("kallsyms_relative_base");
+ 		output_address(relative_base);
+ 		printf("\n");
++		printf("\t.previous\n");
++		printf("#endif\n");
+ 	}
+ 
++	printf("#ifndef NO_SYMS\n");
+ 	output_label("kallsyms_num_syms");
+ 	printf("\t.long\t%u\n", table_cnt);
+ 	printf("\n");
+@@ -583,6 +590,7 @@ static void write_src(int *pad, int *opad)
+ 	for (i = 0; i < 256; i++)
+ 		printf("\t.short\t%d\n", best_idx[i]);
+ 	printf("\n");
++	printf("#endif\n");
+ }
+ 
+ 
+-- 
+cgit 1.2.3-1.el7
+

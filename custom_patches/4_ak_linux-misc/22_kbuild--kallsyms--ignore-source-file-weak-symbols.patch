@@ -1,0 +1,50 @@
+From 0b34588c7b762be27154be08ec592cb17766cd55 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Sun, 16 Dec 2018 16:30:04 -0800
+Subject: kbuild, kallsyms: Ignore source file weak symbols
+
+With LTO gcc-nm generates some strange weak symbols for each source
+file. These are outside the normal kernel range and confuse
+kallsyms, resulting in incorrect kallsyms tables.
+
+Just ignore them as they are not needed for symbolization.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/kallsyms.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/scripts/kallsyms.c b/scripts/kallsyms.c
+index 54ad86d137849..c6ce73efae8ab 100644
+--- a/scripts/kallsyms.c
++++ b/scripts/kallsyms.c
+@@ -137,6 +137,7 @@ static bool is_ignored_symbol(const char *name, char type)
+ 	};
+ 
+ 	const char * const *p;
++	char *p2;
+ 
+ 	for (p = ignored_symbols; *p; p++)
+ 		if (!strcmp(name, *p))
+@@ -173,6 +174,18 @@ static bool is_ignored_symbol(const char *name, char type)
+ 			return true;
+ 	}
+ 
++	/* gcc-nm produces extra weak symbols for C files
++	 * in the form
++	 * 000000000003aa8b W version.c.36323a88
++	 * ignore they are outside the supported range
++	 * and confuse the symbol generation, and they
++	 * are not useful for symbolization.
++	 */
++	if ((type = 'W' || type == 'w') &&
++		(p2 = strstr(name, ".c.")) &&
++		isxdigit(p2[3]))
++		return true;
++
+ 	return false;
+ }
+ 
+-- 
+cgit 1.2.3-1.el7
+

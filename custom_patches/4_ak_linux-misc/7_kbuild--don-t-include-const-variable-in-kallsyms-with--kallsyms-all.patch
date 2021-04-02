@@ -1,0 +1,37 @@
+From 623a19c16e4df62824990d1445f53b24b92aa930 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Sat, 8 Feb 2014 07:38:45 +0100
+Subject: kbuild: Don't include const variable in kallsyms with !KALLSYMS_ALL
+
+const variables are put into the text segment, so !KALLSYMS_ALL
+includes them into the kallsyms section. Remove them to make
+the kallsyms smaller. This also avoids some problems with LTO.
+The way LTO generates the first pass kallsyms cannot handle
+variables currently, so if we don't filter them out the
+first and second level pass differ too much.
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/kallsyms.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/scripts/kallsyms.c b/scripts/kallsyms.c
+index c7d6a89acb813..cd56e70117e5c 100644
+--- a/scripts/kallsyms.c
++++ b/scripts/kallsyms.c
+@@ -165,6 +165,12 @@ static bool is_ignored_symbol(const char *name, char type)
+ 	if (type == 'N' || type == 'n')
+ 		return true;
+ 
++	/* Don't include const symbols in the text section
++	 * unless --all-symbols is specified.
++	 */
++	if (toupper(type) != 'T' && !all_symbols)
++		return true;
++
+ 	if (toupper(type) == 'A') {
+ 		/* Keep these useful absolute symbols */
+ 		if (strcmp(name, "__kernel_syscall_via_break") &&
+-- 
+cgit 1.2.3-1.el7
+
