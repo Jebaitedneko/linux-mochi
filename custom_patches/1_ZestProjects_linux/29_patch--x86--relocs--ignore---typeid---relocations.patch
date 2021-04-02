@@ -1,0 +1,39 @@
+From 52b999cb2091ee21a4ed1596aa5d6e2895d5cb6a Mon Sep 17 00:00:00 2001
+From: Kees Cook <keescook@chromium.org>
+Date: Wed, 6 Nov 2019 14:47:30 -0800
+Subject: [PATCH] x86, relocs: Ignore __typeid__ relocations
+
+The __typeid__* symbols aren't actually relocations, so they can be
+ignored during relocation generation.
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ arch/x86/tools/relocs.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/arch/x86/tools/relocs.c b/arch/x86/tools/relocs.c
+index ce7188cbdae5..fe89ab4aca44 100644
+--- a/arch/x86/tools/relocs.c
++++ b/arch/x86/tools/relocs.c
+@@ -48,6 +48,7 @@ static const char * const sym_regex_kernel[S_NSYMTYPES] = {
+ 	"^(xen_irq_disable_direct_reloc$|"
+ 	"xen_save_fl_direct_reloc$|"
+ 	"VDSO|"
++	"__typeid__|"
+ 	"__crc_)",
+ 
+ /*
+@@ -808,6 +809,12 @@ static int do_reloc64(struct section *sec, Elf_Rel *rel, ElfW(Sym) *sym,
+ 			    symname);
+ 		break;
+ 
++	case R_X86_64_8:
++		if (!shn_abs || !is_reloc(S_ABS, symname))
++			die("Non-whitelisted %s relocation: %s\n",
++				rel_type(r_type), symname);
++		break;
++
+ 	case R_X86_64_32:
+ 	case R_X86_64_32S:
+ 	case R_X86_64_64:

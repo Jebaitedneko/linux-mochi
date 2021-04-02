@@ -1,0 +1,59 @@
+From 3d15c1b024472f1bc1c08ddfbac5fe937582354b Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Tue, 31 Mar 2020 11:10:15 -0700
+Subject: [PATCH] module: cfi: ensure __cfi_check alignment
+
+For modules with no executable code, LLVM generates a __cfi_check
+stub, but won't align it to page size as expected. This change ensures
+the function is at the beginning of the .text section and correctly
+aligned for the CFI shadow.
+
+Also discard the .eh_frame section, which LLD may emit with CFI_CLANG.
+
+Link: https://bugs.llvm.org/show_bug.cgi?id=46293
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ scripts/module.lds.S | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/module.lds.S b/scripts/module.lds.S
+index 18d5b8423635..a1e1f95c1f0d 100644
+--- a/scripts/module.lds.S
++++ b/scripts/module.lds.S
+@@ -3,10 +3,17 @@
+  * Archs are free to supply their own linker scripts.  ld will
+  * combine them automatically.
+  */
++#include <asm/page.h>
++
+ SECTIONS {
+ 	/DISCARD/ : {
+ 		*(.discard)
+ 		*(.discard.*)
++		/*
++		 * LLD may emit .eh_frame with CONFIG_CFI_CLANG despite
++		 * -fno-asynchronous-unwind-tables. Discard the section.
++		 */
++		*(.eh_frame)
+ 	}
+ 
+ 	__ksymtab		0 : { *(SORT(___ksymtab+*)) }
+@@ -46,7 +53,16 @@ SECTIONS {
+ 		*(.rodata..L*)
+ 	}
+ 
+-	.text : { *(.text .text.[0-9a-zA-Z_]*) }
++#ifdef CONFIG_CFI_CLANG
++	/*
++	 * With CFI_CLANG, ensure __cfi_check is at the beginning of the
++	 * .text section, and that the section is aligned to page size.
++	 */
++	.text : ALIGN(PAGE_SIZE) {
++		*(.text.__cfi_check)
++		*(.text .text.[0-9a-zA-Z_]* .text..L.cfi*)
++	}
++#endif
+ }
+ 
+ /* bring in arch-specific sections */

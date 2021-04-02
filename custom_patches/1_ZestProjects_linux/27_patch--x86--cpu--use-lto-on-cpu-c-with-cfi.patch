@@ -1,0 +1,31 @@
+From 0e4adf387e6566eaafd25b754d774c1fbcbdecdc Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Tue, 22 Dec 2020 12:46:02 -0800
+Subject: [PATCH] x86, cpu: use LTO on cpu.c with CFI
+
+Allow LTO on cpu.c when CONFIG_CFI_CLANG is enabled to avoid CFI
+failures. CFI requires Clang >= 12, where the stack protector inlining
+bug has been fixed.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ arch/x86/power/Makefile | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/x86/power/Makefile b/arch/x86/power/Makefile
+index 5f711a441623..5ced218be339 100644
+--- a/arch/x86/power/Makefile
++++ b/arch/x86/power/Makefile
+@@ -5,9 +5,11 @@ OBJECT_FILES_NON_STANDARD_hibernate_asm_$(BITS).o := y
+ # itself be stack-protected
+ CFLAGS_cpu.o	:= -fno-stack-protector
+ 
++ifndef CONFIG_CFI_CLANG
+ # Clang may incorrectly inline functions with stack protector enabled into
+ # __restore_processor_state(): https://bugs.llvm.org/show_bug.cgi?id=47479
+ CFLAGS_REMOVE_cpu.o := $(CC_FLAGS_LTO)
++endif
+ 
+ obj-$(CONFIG_PM_SLEEP)		+= cpu.o
+ obj-$(CONFIG_HIBERNATION)	+= hibernate_$(BITS).o hibernate_asm_$(BITS).o hibernate.o

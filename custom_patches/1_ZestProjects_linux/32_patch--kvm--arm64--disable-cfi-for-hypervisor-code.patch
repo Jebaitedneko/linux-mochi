@@ -1,0 +1,38 @@
+From bc097ad9f7841a55949a842e0e392c43bd2e6ae3 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Mon, 23 Apr 2018 12:52:07 -0700
+Subject: [PATCH] KVM: arm64: disable CFI for hypervisor code
+
+Disable LTO+CFI for code that runs at EL2 to avoid address space
+confusion as the CFI jump tables point to EL1 addresses.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ arch/arm64/kvm/Makefile     | 1 +
+ arch/arm64/kvm/hyp/Makefile | 3 +++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/arch/arm64/kvm/Makefile b/arch/arm64/kvm/Makefile
+index 1504c81fbf5d..83c2acf1d782 100644
+--- a/arch/arm64/kvm/Makefile
++++ b/arch/arm64/kvm/Makefile
+@@ -4,6 +4,7 @@
+ #
+ 
+ ccflags-y += -I $(srctree)/$(src)
++CFLAGS_REMOVE_debug.o += $(CC_FLAGS_CFI)
+ 
+ KVM=../../../virt/kvm
+ 
+diff --git a/arch/arm64/kvm/hyp/Makefile b/arch/arm64/kvm/hyp/Makefile
+index 4a81eddabcd8..76a575e0284e 100644
+--- a/arch/arm64/kvm/hyp/Makefile
++++ b/arch/arm64/kvm/hyp/Makefile
+@@ -11,3 +11,6 @@ subdir-ccflags-y := -I$(incdir)				\
+ 		    $(DISABLE_STACKLEAK_PLUGIN)
+ 
+ obj-$(CONFIG_KVM) += vhe/ nvhe/ pgtable.o
++
++# Disable LTO+CFI for the files in this directory
++KBUILD_CFLAGS := $(filter-out $(CC_FLAGS_LTO), $(KBUILD_CFLAGS))

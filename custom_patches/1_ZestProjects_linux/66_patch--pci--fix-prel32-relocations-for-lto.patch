@@ -1,0 +1,70 @@
+From 109d4672ff64a4052cfd337ab77b9d6586dcc318 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 11 Dec 2020 10:46:26 -0800
+Subject: [PATCH] PCI: Fix PREL32 relocations for LTO
+
+With Clang's Link Time Optimization (LTO), the compiler can rename
+static functions to avoid global naming collisions. As PCI fixup
+functions are typically static, renaming can break references
+to them in inline assembly. This change adds a global stub to
+DECLARE_PCI_FIXUP_SECTION to fix the issue when PREL32 relocations
+are used.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Acked-by: Bjorn Helgaas <bhelgaas@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Link: https://lore.kernel.org/r/20201211184633.3213045-10-samitolvanen@google.com
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ include/linux/pci.h | 27 +++++++++++++++++++++++++--
+ 1 file changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/include/linux/pci.h b/include/linux/pci.h
+index 22207a79762c..b77ee54a3fcb 100644
+--- a/include/linux/pci.h
++++ b/include/linux/pci.h
+@@ -1912,7 +1912,7 @@ enum pci_fixup_pass {
+ };
+ 
+ #ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+-#define __DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
++#define ___DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
+ 				    class_shift, hook)			\
+ 	__ADDRESSABLE(hook)						\
+ 	asm(".section "	#sec ", \"a\"				\n"	\
+@@ -1921,10 +1921,33 @@ enum pci_fixup_pass {
+ 	    ".long "	#class ", " #class_shift "		\n"	\
+ 	    ".long "	#hook " - .				\n"	\
+ 	    ".previous						\n");
++
++/*
++ * Clang's LTO may rename static functions in C, but has no way to
++ * handle such renamings when referenced from inline asm. To work
++ * around this, create global C stubs for these cases.
++ */
++#ifdef CONFIG_LTO_CLANG
++#define __DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
++				  class_shift, hook, stub)		\
++	void stub(struct pci_dev *dev);					\
++	void stub(struct pci_dev *dev)					\
++	{ 								\
++		hook(dev); 						\
++	}								\
++	___DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
++				  class_shift, stub)
++#else
++#define __DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
++				  class_shift, hook, stub)		\
++	___DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
++				  class_shift, hook)
++#endif
++
+ #define DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
+ 				  class_shift, hook)			\
+ 	__DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
+-				  class_shift, hook)
++				  class_shift, hook, __UNIQUE_ID(hook))
+ #else
+ /* Anonymous variables would be nice... */
+ #define DECLARE_PCI_FIXUP_SECTION(section, name, vendor, device, class,	\

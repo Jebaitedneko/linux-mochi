@@ -1,0 +1,61 @@
+From 2a0c5db3fb0cbb80aac1b689ec411fdc90da9d93 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Thu, 9 Jan 2020 13:11:05 -0800
+Subject: [PATCH] x86: map CFI jump tables in pti_clone_entry_text
+
+Allow CFI enabled entry code to make indirect calls by also mapping
+CFI jump tables, and add a check to ensure the jump table section is
+not empty.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ arch/x86/include/asm/sections.h | 1 +
+ arch/x86/kernel/vmlinux.lds.S   | 4 ++++
+ arch/x86/mm/pti.c               | 9 +++++++++
+ 3 files changed, 14 insertions(+)
+
+diff --git a/arch/x86/include/asm/sections.h b/arch/x86/include/asm/sections.h
+index a6e8373a5170..5abf1301d3ff 100644
+--- a/arch/x86/include/asm/sections.h
++++ b/arch/x86/include/asm/sections.h
+@@ -8,6 +8,7 @@
+ #include <asm/extable.h>
+ 
+ extern char __brk_base[], __brk_limit[];
++extern char __cfi_jt_start[], __cfi_jt_end[];
+ extern char __end_rodata_aligned[];
+ 
+ #if defined(CONFIG_X86_64)
+diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
+index bf9e0adb5b7e..9fef0742de1d 100644
+--- a/arch/x86/kernel/vmlinux.lds.S
++++ b/arch/x86/kernel/vmlinux.lds.S
+@@ -490,3 +490,7 @@ INIT_PER_CPU(irq_stack_backing_store);
+            "kexec control code size is too big");
+ #endif
+ 
++#ifdef CONFIG_CFI_CLANG
++. = ASSERT((__cfi_jt_end - __cfi_jt_start > 0),
++	   "CFI jump table is empty");
++#endif
+diff --git a/arch/x86/mm/pti.c b/arch/x86/mm/pti.c
+index 1aab92930569..f4ee420cc3be 100644
+--- a/arch/x86/mm/pti.c
++++ b/arch/x86/mm/pti.c
+@@ -498,6 +498,15 @@ static void pti_clone_entry_text(void)
+ 	pti_clone_pgtable((unsigned long) __entry_text_start,
+ 			  (unsigned long) __entry_text_end,
+ 			  PTI_CLONE_PMD);
++
++	/*
++	 * If CFI is enabled, also map jump tables, so the entry code can
++	 * make indirect calls.
++	 */
++	if (IS_ENABLED(CONFIG_CFI_CLANG))
++		pti_clone_pgtable((unsigned long) __cfi_jt_start,
++				  (unsigned long) __cfi_jt_end,
++				  PTI_CLONE_PMD);
+ }
+ 
+ /*

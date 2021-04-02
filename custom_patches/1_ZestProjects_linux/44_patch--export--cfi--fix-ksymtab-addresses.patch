@@ -1,0 +1,61 @@
+From 1431c1f18d7a4b34b7add96e3aef87f432204343 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Tue, 3 Dec 2019 11:05:45 -0800
+Subject: [PATCH] export: cfi: fix ksymtab addresses
+
+With CONFIG_CFI_CLANG, LLVM replaces function references with CFI
+jump table addresses to allow indirect call checking. As this is
+unnecessary in ksymtab, this change uses inline assembly to emit
+ksymtab entries that point to the actual function instead when CFI is
+enabled.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ include/linux/export.h | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/include/linux/export.h b/include/linux/export.h
+index fceb5e855717..9c3d0d29c494 100644
+--- a/include/linux/export.h
++++ b/include/linux/export.h
+@@ -63,12 +63,39 @@ struct kernel_symbol {
+ 	int namespace_offset;
+ };
+ #else
++#ifdef CONFIG_CFI_CLANG
++#include <linux/compiler.h>
++/*
++ * With -fno-sanitize-cfi-canonical-jump-tables, the compiler replaces
++ * references to functions with jump table addresses. Use inline assembly
++ * to emit ksymtab entries that point to the actual function instead.
++ */
++#define ___KSYMTAB_ENTRY(sym, sec, size)				\
++	__ADDRESSABLE(sym)						\
++	asm("	.section \"___ksymtab" sec "+" #sym "\", \"a\"	\n"	\
++	    "	.balign " #size "				\n"	\
++	    "__ksymtab_" #sym ":				\n"	\
++	    "	." #size "byte	" #sym "			\n"	\
++	    "	." #size "byte	__kstrtab_" #sym "		\n"	\
++	    "	." #size "byte	__kstrtabns_" #sym "		\n"	\
++	    "	.previous					\n")
++
++#ifdef CONFIG_64BIT
++#define __KSYMTAB_ENTRY(sym, sec)	___KSYMTAB_ENTRY(sym, sec, 8)
++#else
++#define __KSYMTAB_ENTRY(sym, sec)	___KSYMTAB_ENTRY(sym, sec, 4)
++#endif
++
++#else /* !CONFIG_CFI_CLANG */
++
+ #define __KSYMTAB_ENTRY(sym, sec)					\
+ 	static const struct kernel_symbol __ksymtab_##sym		\
+ 	__attribute__((section("___ksymtab" sec "+" #sym), used))	\
+ 	__aligned(sizeof(void *))					\
+ 	= { (unsigned long)&sym, __kstrtab_##sym, __kstrtabns_##sym }
+ 
++#endif
++
+ struct kernel_symbol {
+ 	unsigned long value;
+ 	const char *name;

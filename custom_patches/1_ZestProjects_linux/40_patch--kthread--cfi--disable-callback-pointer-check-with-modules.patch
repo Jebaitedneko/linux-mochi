@@ -1,0 +1,40 @@
+From 87fbde4fb3bfb70ded818ea7e496af69aeccf684 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 25 Sep 2020 18:31:59 -0700
+Subject: [PATCH] kthread: cfi: disable callback pointer check with modules
+
+With non-canonical CFI, a callback function passed to
+__kthread_queue_delayed_work from a module points to a jump table
+entry defined in the module instead of the one used in the core
+kernel, which breaks function address equality assumed in this test:
+
+  WARN_ON_ONCE(timer->function != kthread_delayed_work_timer_fn);
+
+To work around the problem, disable the warning when CFI and modules
+are both enabled.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.comi
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ kernel/kthread.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index 933a625621b8..ef65bfda3fb4 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -911,7 +911,13 @@ static void __kthread_queue_delayed_work(struct kthread_worker *worker,
+ 	struct timer_list *timer = &dwork->timer;
+ 	struct kthread_work *work = &dwork->work;
+ 
+-	WARN_ON_ONCE(timer->function != kthread_delayed_work_timer_fn);
++	/*
++	 * With CFI, timer->function can point to a jump table entry in a module,
++	 * which fails the comparison. Disable the warning if CFI and modules are
++	 * both enabled.
++	 */
++	if (!IS_ENABLED(CONFIG_CFI_CLANG) || !IS_ENABLED(CONFIG_MODULES))
++		WARN_ON_ONCE(timer->function != kthread_delayed_work_timer_fn);
+ 
+ 	/*
+ 	 * If @delay is 0, queue @dwork->work immediately.  This is for

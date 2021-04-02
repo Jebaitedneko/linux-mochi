@@ -1,0 +1,41 @@
+From 74f91329f8c891fc0a03f0b96cfa4dd1c46ff3fe Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Thu, 19 Mar 2020 17:09:31 -0700
+Subject: [PATCH] workqueue: cfi: disable callback pointer check with modules
+
+With non-canonical CFI, a callback function passed to
+__queue_delayed_work from a module points to a jump table entry
+defined in the module instead of the one used in the core kernel,
+which breaks function address equality assumed in this test:
+
+  WARN_ON_ONCE(timer->function != delayed_work_timer_fn);
+
+To work around the problem, disable the warning when CFI and modules
+are both enabled.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ kernel/workqueue.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 0695c7895c89..b78d2e7b0541 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1627,7 +1627,14 @@ static void __queue_delayed_work(int cpu, struct workqueue_struct *wq,
+ 	struct work_struct *work = &dwork->work;
+ 
+ 	WARN_ON_ONCE(!wq);
+-	WARN_ON_ONCE(timer->function != delayed_work_timer_fn);
++	/*
++	 * With CFI, timer->function can point to a jump table entry in a module,
++	 * which fails the comparison. Disable the warning if CFI and modules are
++	 * both enabled.
++	 */
++	if (!IS_ENABLED(CONFIG_CFI_CLANG) || !IS_ENABLED(CONFIG_MODULES))
++		WARN_ON_ONCE(timer->function != delayed_work_timer_fn);
++
+ 	WARN_ON_ONCE(timer_pending(timer));
+ 	WARN_ON_ONCE(!list_empty(&work->entry));
+ 

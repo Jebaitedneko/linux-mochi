@@ -1,0 +1,28 @@
+From 77cf74ac5b6b38718b1c850dd0fdfdd41eb8ddc3 Mon Sep 17 00:00:00 2001
+From: Kees Cook <keescook@chromium.org>
+Date: Wed, 16 Oct 2019 11:42:11 -0700
+Subject: [PATCH] x86/extable: Do not mark exception callback as CFI
+
+The exception table entries are constructed out of a relative offset
+and point to the actual function, not the CFI table entry. For now,
+just mark the caller as not checking CFI. The failure is most visible
+at boot with CONFIG_DEBUG_RODATA_TEST=y.
+
+Signed-off-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ arch/x86/mm/extable.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/mm/extable.c b/arch/x86/mm/extable.c
+index b93d6cd08a7f..a7eae1c4c59f 100644
+--- a/arch/x86/mm/extable.c
++++ b/arch/x86/mm/extable.c
+@@ -155,6 +155,7 @@ enum handler_type ex_get_fault_handler_type(unsigned long ip)
+ 		return EX_HANDLER_OTHER;
+ }
+ 
++__nocfi
+ int fixup_exception(struct pt_regs *regs, int trapnr, unsigned long error_code,
+ 		    unsigned long fault_addr)
+ {

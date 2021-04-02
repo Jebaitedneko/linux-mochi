@@ -1,0 +1,130 @@
+From b841c46b6c3cee13cfb873f8dc85ee7c463c486a Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Wed, 14 Feb 2018 10:26:35 -0800
+Subject: [PATCH] kallsyms: cfi: strip hashes from static functions
+
+With ThinLTO and CFI both enabled, LLVM appends a hash to the names of
+all static functions. This can break some userspace tools that don't
+expect the function name to change, so strip out the hash from output.
+
+Suggested-by: Jack Pham <jackp@codeaurora.org>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ kernel/kallsyms.c | 54 ++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 49 insertions(+), 5 deletions(-)
+
+diff --git a/kernel/kallsyms.c b/kernel/kallsyms.c
+index fe9de067771c..96505113b907 100644
+--- a/kernel/kallsyms.c
++++ b/kernel/kallsyms.c
+@@ -161,6 +161,26 @@ static unsigned long kallsyms_sym_address(int idx)
+ 	return kallsyms_relative_base - 1 - kallsyms_offsets[idx];
+ }
+ 
++#if defined(CONFIG_CFI_CLANG) && defined(CONFIG_LTO_CLANG_THIN)
++/*
++ * LLVM appends a hash to static function names when ThinLTO and CFI are
++ * both enabled, which causes confusion and potentially breaks user space
++ * tools, so we will strip the postfix from expanded symbol names.
++ */
++static inline char *cleanup_symbol_name(char *s)
++{
++	char *res = NULL;
++
++	res = strrchr(s, '$');
++	if (res)
++		*res = '\0';
++
++	return res;
++}
++#else
++static inline char *cleanup_symbol_name(char *s) { return NULL; }
++#endif
++
+ /* Lookup the address for this symbol. Returns 0 if not found. */
+ unsigned long kallsyms_lookup_name(const char *name)
+ {
+@@ -173,6 +193,9 @@ unsigned long kallsyms_lookup_name(const char *name)
+ 
+ 		if (strcmp(namebuf, name) == 0)
+ 			return kallsyms_sym_address(i);
++
++		if (cleanup_symbol_name(namebuf) && strcmp(namebuf, name) == 0)
++			return kallsyms_sym_address(i);
+ 	}
+ 	return module_kallsyms_lookup_name(name);
+ }
+@@ -297,7 +320,9 @@ const char *kallsyms_lookup(unsigned long addr,
+ 				       namebuf, KSYM_NAME_LEN);
+ 		if (modname)
+ 			*modname = NULL;
+-		return namebuf;
++
++		ret = namebuf;
++		goto found;
+ 	}
+ 
+ 	/* See if it's in a module or a BPF JITed image. */
+@@ -310,11 +335,16 @@ const char *kallsyms_lookup(unsigned long addr,
+ 	if (!ret)
+ 		ret = ftrace_mod_address_lookup(addr, symbolsize,
+ 						offset, modname, namebuf);
++
++found:
++	cleanup_symbol_name(namebuf);
+ 	return ret;
+ }
+ 
+ int lookup_symbol_name(unsigned long addr, char *symname)
+ {
++	int res;
++
+ 	symname[0] = '\0';
+ 	symname[KSYM_NAME_LEN - 1] = '\0';
+ 
+@@ -325,15 +355,23 @@ int lookup_symbol_name(unsigned long addr, char *symname)
+ 		/* Grab name */
+ 		kallsyms_expand_symbol(get_symbol_offset(pos),
+ 				       symname, KSYM_NAME_LEN);
+-		return 0;
++		goto found;
+ 	}
+ 	/* See if it's in a module. */
+-	return lookup_module_symbol_name(addr, symname);
++	res = lookup_module_symbol_name(addr, symname);
++	if (res)
++		return res;
++
++found:
++	cleanup_symbol_name(symname);
++	return 0;
+ }
+ 
+ int lookup_symbol_attrs(unsigned long addr, unsigned long *size,
+ 			unsigned long *offset, char *modname, char *name)
+ {
++	int res;
++
+ 	name[0] = '\0';
+ 	name[KSYM_NAME_LEN - 1] = '\0';
+ 
+@@ -345,10 +383,16 @@ int lookup_symbol_attrs(unsigned long addr, unsigned long *size,
+ 		kallsyms_expand_symbol(get_symbol_offset(pos),
+ 				       name, KSYM_NAME_LEN);
+ 		modname[0] = '\0';
+-		return 0;
++		goto found;
+ 	}
+ 	/* See if it's in a module. */
+-	return lookup_module_symbol_attrs(addr, size, offset, modname, name);
++	res = lookup_module_symbol_attrs(addr, size, offset, modname, name);
++	if (res)
++		return res;
++
++found:
++	cleanup_symbol_name(name);
++	return 0;
+ }
+ 
+ /* Look up a kernel symbol and return it in a text buffer. */

@@ -1,0 +1,36 @@
+From 0a9eadf65e4a1d5be4e2bdef55687d58eb41edf6 Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <natechancellor@gmail.com>
+Date: Tue, 15 Dec 2020 13:24:09 -0700
+Subject: [PATCH] drivers: hv: dxgkrnl: Silence -Wunused-result around
+ refcount_inc_not_zero
+
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ drivers/hv/dxgkrnl/dxgadapter.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/hv/dxgkrnl/dxgadapter.c b/drivers/hv/dxgkrnl/dxgadapter.c
+index 82e5335f5421..43c03af9a28b 100644
+--- a/drivers/hv/dxgkrnl/dxgadapter.c
++++ b/drivers/hv/dxgkrnl/dxgadapter.c
+@@ -667,7 +667,8 @@ void dxgresource_destroy(struct dxgresource *resource)
+ 
+ void dxgresource_acquire_reference(struct dxgresource *resource)
+ {
+-	refcount_inc_not_zero(&resource->refcount);
++	if (refcount_inc_not_zero(&resource->refcount))
++		;
+ }
+ 
+ void dxgresource_release_reference(struct dxgresource *resource)
+@@ -1330,7 +1331,8 @@ void dxgsyncobject_acquire_reference(struct dxgsyncobject *syncobj)
+ {
+ 	TRACE_DEBUG(1, "%s 0x%p %d",
+ 		    __func__, syncobj, refcount_read(&syncobj->refcount));
+-	refcount_inc_not_zero(&syncobj->refcount);
++	if (refcount_inc_not_zero(&syncobj->refcount))
++		;
+ }
+ 
+ void dxgsyncobject_release_reference(struct dxgsyncobject *syncobj)

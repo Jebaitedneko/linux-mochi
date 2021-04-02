@@ -1,0 +1,31 @@
+From a5d3ccfde76b63975ec317ba51a047bd859ddd19 Mon Sep 17 00:00:00 2001
+From: Sasha Levin <sashal@kernel.org>
+Date: Fri, 14 Aug 2020 08:38:56 -0400
+Subject: [PATCH] drivers: hv: dxgkrnl: create a MAINTAINERS entry
+
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+Link: https://lore.kernel.org/r/20200814123856.3880009-5-sashal@kernel.org
+Signed-off-by: Nathan Chancellor <natechancellor@gmail.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ MAINTAINERS | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 281de213ef47..1cba1c783d39 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -8190,6 +8190,13 @@ F:	Documentation/devicetree/bindings/mtd/ti,am654-hbmc.txt
+ F:	drivers/mtd/hyperbus/
+ F:	include/linux/mtd/hyperbus.h
+ 
++Hyper-V vGPU DRIVER
++M:	Sasha Levin <sashal@kernel.org>
++M:	Iouri Tarassov <iourit@microsoft.com>
++L:	linux-hyperv@vger.kernel.org
++S:	Supported
++F:	drivers/hv/dxgkrnl/
++
+ HYPERVISOR VIRTUAL CONSOLE DRIVER
+ L:	linuxppc-dev@lists.ozlabs.org
+ S:	Odd Fixes

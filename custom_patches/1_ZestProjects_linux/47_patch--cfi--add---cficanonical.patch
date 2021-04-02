@@ -1,0 +1,80 @@
+From 9cf34940fb94756fa537e03642e226ba850d79ce Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 20 Mar 2020 12:17:13 -0700
+Subject: [PATCH] cfi: add __cficanonical
+
+With non-canonical Control Flow Integrity (CFI), the compiler rewrites
+function references to point to a jump table entry. This won't happen
+when the address is taken in assembly, and will result in a CFI
+failure if we jump to the address later in C code.
+
+This change adds the __cficanonical attribute, which tells the
+compiler to switch to a canonical jump table for the function. With
+canonical CFI, the compiler appends a .cfi postfix to the function
+name, and points the original symbol to the jump table. This allows
+addresses taken in assembly code to be used for indirect calls without
+tripping CFI checks.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ include/linux/compiler-clang.h | 1 +
+ include/linux/compiler_types.h | 4 ++++
+ include/linux/init.h           | 4 ++--
+ include/linux/pci.h            | 4 ++--
+ 4 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/include/linux/compiler-clang.h b/include/linux/compiler-clang.h
+index ecd307959098..12439b71d2ed 100644
+--- a/include/linux/compiler-clang.h
++++ b/include/linux/compiler-clang.h
+@@ -67,3 +67,4 @@
+ #endif
+ 
+ #define __nocfi		__attribute__((__no_sanitize__("cfi")))
++#define __cficanonical	__attribute__((__cfi_canonical_jump_table__))
+diff --git a/include/linux/compiler_types.h b/include/linux/compiler_types.h
+index c940021764bd..c9b574165381 100644
+--- a/include/linux/compiler_types.h
++++ b/include/linux/compiler_types.h
+@@ -241,6 +241,10 @@ struct ftrace_likely_data {
+ # define __nocfi
+ #endif
+ 
++#ifndef __cficanonical
++# define __cficanonical
++#endif
++
+ #ifndef asm_volatile_goto
+ #define asm_volatile_goto(x...) asm goto(x)
+ #endif
+diff --git a/include/linux/init.h b/include/linux/init.h
+index 6ac59cab9c0d..e83a6cfc33ee 100644
+--- a/include/linux/init.h
++++ b/include/linux/init.h
+@@ -220,8 +220,8 @@ extern bool initcall_debug;
+ 	__initcall_name(initstub, __iid, id)
+ 
+ #define __define_initcall_stub(__stub, fn)			\
+-	int __init __stub(void);				\
+-	int __init __stub(void)					\
++	int __init __cficanonical __stub(void);			\
++	int __init __cficanonical __stub(void)			\
+ 	{ 							\
+ 		return fn();					\
+ 	}							\
+diff --git a/include/linux/pci.h b/include/linux/pci.h
+index b77ee54a3fcb..abba665e2fe8 100644
+--- a/include/linux/pci.h
++++ b/include/linux/pci.h
+@@ -1930,8 +1930,8 @@ enum pci_fixup_pass {
+ #ifdef CONFIG_LTO_CLANG
+ #define __DECLARE_PCI_FIXUP_SECTION(sec, name, vendor, device, class,	\
+ 				  class_shift, hook, stub)		\
+-	void stub(struct pci_dev *dev);					\
+-	void stub(struct pci_dev *dev)					\
++	void __cficanonical stub(struct pci_dev *dev);			\
++	void __cficanonical stub(struct pci_dev *dev)			\
+ 	{ 								\
+ 		hook(dev); 						\
+ 	}								\

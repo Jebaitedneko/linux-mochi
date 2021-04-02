@@ -1,0 +1,36 @@
+From 5495a146859168b5596d411d5bcd2be17ada84b9 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Wed, 4 Dec 2019 15:57:39 -0800
+Subject: [PATCH] kbuild: lto: limit inlining
+
+This change limits function inlining across translation unit boundaries
+in order to reduce the binary size with LTO. The -import-instr-limit
+flag defines a size limit, as the number of LLVM IR instructions, for
+importing functions from other TUs, defaulting to 100.
+
+Based on testing with arm64 defconfig, we found that a limit of 5 is a
+reasonable compromise between performance and binary size, reducing the
+size of a stripped vmlinux by 11%.
+
+Suggested-by: George Burgess IV <gbiv@google.com>
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index 588ff99dae02..9fb0c53f139c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -932,6 +932,9 @@ else
+ CC_FLAGS_LTO	:= -flto
+ endif
+ CC_FLAGS_LTO	+= -fvisibility=hidden
++
++# Limit inlining across translation units to reduce binary size
++KBUILD_LDFLAGS += -mllvm -import-instr-limit=5
+ endif
+ 
+ ifdef CONFIG_LTO

@@ -1,0 +1,94 @@
+From 63658d3bcdc36b6afbd4a2a3071e83d665ca7783 Mon Sep 17 00:00:00 2001
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Tue, 14 Apr 2020 16:20:30 -0700
+Subject: [PATCH] objtool: Ignore CFI jump tables
+
+Skip checking for the compiler-generated jump table symbols when
+Clang's Control-Flow Integrity (CFI) is enabled.
+
+Signed-off-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ tools/objtool/check.c | 41 ++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/tools/objtool/check.c b/tools/objtool/check.c
+index ec9ed9b98959..cc85f542cc64 100644
+--- a/tools/objtool/check.c
++++ b/tools/objtool/check.c
+@@ -825,6 +825,37 @@ static int add_ignore_alternatives(struct objtool_file *file)
+ 	return 0;
+ }
+ 
++/*
++ * CONFIG_CFI_CLANG: Check if the section is a CFI jump table or a
++ * compiler-generated CFI handler.
++ */
++static bool is_cfi_section(struct section *sec)
++{
++	return (sec->name &&
++		(!strncmp(sec->name, ".text..L.cfi.jumptable", 22) ||
++		 !strcmp(sec->name, ".text.__cfi_check")));
++}
++
++/*
++ * CONFIG_CFI_CLANG: Ignore CFI jump tables.
++ */
++static void add_cfi_jumptables(struct objtool_file *file)
++{
++	struct section *sec;
++	struct symbol *func;
++	struct instruction *insn;
++
++	for_each_sec(file, sec) {
++		if (!is_cfi_section(sec))
++			continue;
++
++		list_for_each_entry(func, &sec->symbol_list, list) {
++			sym_for_each_insn(file, func, insn)
++				insn->ignore = true;
++		}
++	}
++}
++
+ /*
+  * Find the destination instructions for all jumps.
+  */
+@@ -887,6 +918,9 @@ static int add_jump_destinations(struct objtool_file *file)
+ 			if (!strcmp(insn->sec->name, ".altinstr_replacement"))
+ 				continue;
+ 
++			if (is_cfi_section(insn->sec))
++				continue;
++
+ 			WARN_FUNC("can't find jump dest instruction at %s+0x%lx",
+ 				  insn->sec, insn->offset, dest_sec->name,
+ 				  dest_off);
+@@ -994,6 +1028,9 @@ static int add_call_destinations(struct objtool_file *file)
+ 			insn->call_dest = find_call_destination(reloc->sym->sec,
+ 								dest_off);
+ 			if (!insn->call_dest) {
++				if (is_cfi_section(reloc->sym->sec))
++					continue;
++
+ 				WARN_FUNC("can't find call dest symbol at %s+0x%lx",
+ 					  insn->sec, insn->offset,
+ 					  reloc->sym->sec->name,
+@@ -1728,6 +1765,7 @@ static int decode_sections(struct objtool_file *file)
+ 
+ 	add_ignores(file);
+ 	add_uaccess_safe(file);
++	add_cfi_jumptables(file);
+ 
+ 	ret = add_ignore_alternatives(file);
+ 	if (ret)
+@@ -2599,7 +2637,8 @@ static int validate_branch(struct objtool_file *file, struct symbol *func,
+ 			if (dead_end_function(file, insn->call_dest))
+ 				return 0;
+ 
+-			if (insn->type == INSN_CALL && insn->call_dest->static_call_tramp) {
++			if (insn->type == INSN_CALL && insn->call_dest &&
++					insn->call_dest->static_call_tramp) {
+ 				list_add_tail(&insn->static_call_node,
+ 					      &file->static_call_list);
+ 			}

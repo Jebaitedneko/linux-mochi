@@ -1,0 +1,36 @@
+From 394f25f9f45467a4fbbfa991c9dd3966a876a59b Mon Sep 17 00:00:00 2001
+From: Stefan Agner <stefan@agner.ch>
+Date: Sun, 7 Jul 2019 01:56:49 -0400
+Subject: [PATCH] kbuild: use LLVM integrated assembler for C files
+
+Now that all inline assembly can be assembled by LLVM's integrated
+assembler, lets use the integreated assembler for c files.
+
+Change-Id: Iad283c150a1553486f23587eb7f925fcadf2839e
+Signed-off-by: Stefan Agner <stefan@agner.ch>
+Signed-off-by: Adam W. Willis <return.of.octobot@gmail.com>
+Signed-off-by: Danny Lin <danny@kdrag0n.dev>
+Signed-off-by: Yousef Algadri <yusufgadrie@gmail.com>
+Signed-off-by: Panchajanya1999 <panchajanya@azure-dev.live>
+---
+ Makefile | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 1ed9dede3fe3..81e1d45d0a2f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -568,12 +568,9 @@ endif
+ ifneq ($(GCC_TOOLCHAIN),)
+ CLANG_FLAGS	+= --gcc-toolchain=$(GCC_TOOLCHAIN)
+ endif
+-ifneq ($(LLVM_IAS),1)
+-CLANG_FLAGS	+= -no-integrated-as
+-endif
+ CLANG_FLAGS	+= -Werror=unknown-warning-option
+ KBUILD_CFLAGS	+= $(CLANG_FLAGS)
+-KBUILD_AFLAGS	+= $(CLANG_FLAGS)
++KBUILD_AFLAGS	+= $(CLANG_FLAGS) -no-integrated-as
+ export CLANG_FLAGS
+ endif
+ 
