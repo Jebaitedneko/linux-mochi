@@ -70,6 +70,11 @@ if [ -z ${_localmodcfg} ]; then
   _localmodcfg=n
 fi
 
+# Check if you're building on CI, default N.
+if [ -z ${cibuild+x} ]; then
+  cibuild=n
+fi
+
 # Tweak kernel options prior to a build via nconfig
 _makenconfig=
 
@@ -277,7 +282,13 @@ prepare() {
 
 build() {
   cd linux-${_major}
-  make -j$((`nproc`+2)) CC="ccache gcc" all
+  if [ "$cibuild" = "y" ]; then
+    msg2 "CI Build Starting..."
+    make -j$((`nproc`+2)) all
+  else
+    msg2 "Normal Build Starting..."
+    make -j$((`nproc`+2)) CC="ccache gcc" all
+  fi
 }
 
 _package() {
