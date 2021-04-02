@@ -156,10 +156,11 @@ prepare() {
     patch -Np1 -i ../patch-${pkgver}-xanmod${xanmod}
   fi
 
-  msg2 "Setting version..."
+  local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
+  msg2 "Setting version to ${_localversion}"
   scripts/setlocalversion --save-scmversion
   #echo "-$pkgrel" > localversion.10-pkgrel
-  echo "-MANJARO" > localversion.20-pkgname
+  echo ${_localversion} > localversion.10-pkgbase
 
   # Archlinux patches
   local src
@@ -234,7 +235,8 @@ prepare() {
   scripts/config --set-str CONFIG_ANDROID_BINDER_DEVICES "binder,hwbinder,vndbinder"
   # CONFIG_ANDROID_BINDER_IPC_SELFTEST is not set
   
-  scripts/config --set-str CONFIG_DEFAULT_HOSTNAME "manjaro"
+  local _hostname=`echo $pkgbase | sed "s/linux-//g"`
+  scripts/config --set-str CONFIG_DEFAULT_HOSTNAME "${_hostname}"
 
   scripts/config --disable CONFIG_HZ_500
   scripts/config --enable CONFIG_HZ_1000
@@ -320,11 +322,15 @@ _package() {
   install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
 
   # Used by mkinitcpio to name the kernel
-  echo "manjaro-xanmod" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
+  local _cpio_name=`echo $pkgbase | sed "s/linux-//g"`
+  msg2 "Setting mkinitcpio kernel name as ${_cpio_name}"
+  echo ${_cpio_name} | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
   # echo "${_major}-${CARCH}" | install -Dm644 /dev/stdin "$modulesdir/kernelbase"
  
   # add kernel version
-  echo "${pkgver}-${pkgrel}-Manjaro-Xanmod x64" | install -Dm644 /dev/stdin "${pkgdir}/boot/${pkgbase}.kver"
+  local _kver=`echo $pkgbase | sed "s/linux-//g;s/\b\(.\)/\u\1/g"`
+  msg2 "Adding .kver as ${_kver}"
+  echo "${pkgver}-${pkgrel}-${_kver} x64" | install -Dm644 /dev/stdin "${pkgdir}/boot/${pkgbase}.kver"
 
   msg2 "Installing modules..."
   make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
@@ -334,7 +340,7 @@ _package() {
 }
 
 _package-headers() {
-  pkgdesc="Header files and scripts for building modules for linux-manjaro-xanmod kernel"
+  pkgdesc="Header files and scripts for building modules for ${pkgbase} kernel"
   provides=()
   replaces=()
   conflicts=()
