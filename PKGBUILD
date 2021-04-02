@@ -192,8 +192,8 @@ prepare() {
             msg2 "Applying patch ${i} from ${d}" && patch -Np1 < $patch_dir/${d}/${i}_*.patch
     done
   done
-  # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
-  # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
+  scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
+  scripts/config --enable CONFIG_INLINE_OPTIMIZATION
 
   scripts/config --enable CONFIG_BOOTSPLASH
   
