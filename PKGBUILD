@@ -25,7 +25,7 @@
 ## Default is: 0 => generic
 ## Good option if your package is for one machine: 99 => native
 if [ -z ${_microarchitecture+x} ]; then
-  _microarchitecture=10
+  _microarchitecture=0
 fi
 
 ## Disable NUMA since most users do not have multiple processors. Breaks CUDA/NvEnc.
@@ -80,8 +80,17 @@ _makenconfig=
 
 ### IMPORTANT: Do no edit below this line unless you know what you're doing
 
+# Change package name according to arch
+if [ $_microarchitecture == 10 ]; then
+pkgbase=linux-manjaro-xanmod-mochi-piledriver
+else
+if [ $_microarchitecture == 0 ]; then
+pkgbase=linux-manjaro-xanmod-mochi-generic
+else
+pkgbase=linux-manjaro-xanmod-mochi
+fi
+fi
 
-pkgbase=linux-manjaro-xanmod
 pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgver=5.11.11
 _major=5.11
