@@ -49,13 +49,13 @@ diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
 index 7e3905c6e7d17..5297051dde418 100755
 --- a/scripts/link-vmlinux.sh
 +++ b/scripts/link-vmlinux.sh
-@@ -403,14 +403,28 @@ elif [ -n "${CONFIG_KALLSYMS}" ]; then
+@@ -478,13 +478,28 @@ elif [ -n "${CONFIG_KALLSYMS}" ]; then
  	fi
  fi
  
 +if [ -z "${CONFIG_SINGLE_LINK}" ] ; then
 +
- info LDFINAL vmlinux
++info LDFINAL vmlinux
  vmlinux_link vmlinux "${kallsymso} ${kallsymsorel}" ${btf_vmlinux_bin_o}
  
 +else

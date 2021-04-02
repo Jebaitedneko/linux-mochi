@@ -82,10 +82,10 @@ index 2b8543bbdb311..3a0dd8731a3e8 100755
  elif [ -n "${CONFIG_KALLSYMS}" ]; then
  
  	# kallsyms support
-@@ -390,7 +404,7 @@ elif [ -n "${CONFIG_KALLSYMS}" ]; then
+@@ -478,7 +478,7 @@ elif [ -n "${CONFIG_KALLSYMS}" ]; then
+ 	fi
  fi
  
- info LDFINAL vmlinux
 -vmlinux_link vmlinux "${kallsymso}" ${btf_vmlinux_bin_o}
 +vmlinux_link vmlinux "${kallsymso} ${kallsymsorel}" ${btf_vmlinux_bin_o}
  

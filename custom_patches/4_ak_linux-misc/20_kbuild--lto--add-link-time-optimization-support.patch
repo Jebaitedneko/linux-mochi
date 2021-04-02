@@ -298,18 +298,18 @@ index 4c058f12dd73c..0d7f82599ce85 100644
  			-T $(@D)/.tmp_$(@F:.o=.ver);				\
  		mv -f $(@D)/.tmp_$(@F) $@;					\
  		rm -f $(@D)/.tmp_$(@F:.o=.ver);					\
-@@ -423,8 +424,9 @@ $(obj)/lib.a: $(lib-y) FORCE
- # Do not replace $(filter %.o,^) with $(real-prereqs). When a single object
- # module is turned into a multi object module, $^ will contain header file
- # dependencies recorded in the .*.cmd file.
+@@ -442,8 +442,9 @@ cmd_link_multi-m =						\
+ 	rm -f $@; 						\
+ 	$(AR) cDPrsT $@ $(filter %.o,$^)
+ else
 -quiet_cmd_link_multi-m = LD [M]  $@
 -      cmd_link_multi-m = $(LD) $(ld_flags) -r -o $@ $(filter %.o,$^)
 +quiet_cmd_link_multi-m = LDFINAL [M]  $@
 +      cmd_link_multi-m = $(LDFINAL) $(ld_flags) -r $(KBUILD_MOD_LDFLAGS) \
 +				-o $@ $(filter %.o,$^)
+ endif
  
  $(multi-used-m): FORCE
- 	$(call if_changed,link_multi-m)
 diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
 index 213677a5ed33e..e8ef7c900c16d 100644
 --- a/scripts/Makefile.lib
@@ -407,13 +407,13 @@ diff --git a/scripts/Makefile.modfinal b/scripts/Makefile.modfinal
 index d49ec001825dd..6ad4a89b14874 100644
 --- a/scripts/Makefile.modfinal
 +++ b/scripts/Makefile.modfinal
-@@ -30,9 +30,9 @@ quiet_cmd_cc_o_c = CC [M]  $@
+@@ -49,9 +49,9 @@ endif # CONFIG_STACK_VALIDATION
  
- ARCH_POSTLINK := $(wildcard $(srctree)/arch/$(SRCARCH)/Makefile.postlink)
+ endif # CONFIG_LTO_CLANG
  
 -quiet_cmd_ld_ko_o = LD [M]  $@
 +quiet_cmd_ld_ko_o = LDFINAL [M]  $@
-       cmd_ld_ko_o =                                                     \
+       cmd_ld_ko_o +=							\
 -	$(LD) -r $(KBUILD_LDFLAGS)					\
 +	$(LDFINAL) -r $(KBUILD_MOD_LDFLAGS) $(KBUILD_LDFLAGS)		\
  		$(KBUILD_LDFLAGS_MODULE) $(LDFLAGS_MODULE)		\
@@ -423,11 +423,11 @@ diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
 index 7961820c10a70..e76058a5dd723 100755
 --- a/scripts/link-vmlinux.sh
 +++ b/scripts/link-vmlinux.sh
-@@ -56,7 +56,7 @@ modpost_link()
- 		${KBUILD_VMLINUX_LIBS}				\
- 		--end-group"
+@@ -98,7 +98,7 @@ modpost_link()
+ 		info LD ${1}
+ 	fi
  
--	${LD} ${KBUILD_LDFLAGS} -r -o ${1} ${objects}
+-	${LD} ${KBUILD_LDFLAGS} -r -o ${1} ${lds} ${objects}
 +	${LDFINAL} ${KBUILD_LDFLAGS} -r ${KBUILD_MODPOST_LDFLAGS} -o ${1} ${objects}
  }
  
@@ -503,23 +503,14 @@ index 7961820c10a70..e76058a5dd723 100755
  }
  
  # Perform one step in kallsyms generation, including temporary linking of
-@@ -276,7 +309,7 @@ fi;
+@@ -384,6 +384,7 @@ fi;
  ${MAKE} -f "${srctree}/scripts/Makefile.build" obj=init need-builtin=1
  
  #link vmlinux.o
--info LD vmlinux.o
 +info LDFINAL vmlinux.o
  modpost_link vmlinux.o
  objtool_link vmlinux.o
  
-@@ -340,6 +373,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
- 	fi
- fi
- 
-+info LDFINAL vmlinux
- vmlinux_link vmlinux "${kallsymso}" ${btf_vmlinux_bin_o}
- 
- # fill in BTF IDs
 diff --git a/scripts/mkcompile_h b/scripts/mkcompile_h
 index 4ae735039daf2..a0555c4c83ca9 100755
 --- a/scripts/mkcompile_h

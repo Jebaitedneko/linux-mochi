@@ -15,7 +15,16 @@ diff --git a/Makefile b/Makefile
 index b250c536894f7..52b3bfc375d41 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1817,10 +1817,15 @@ clean: $(clean-dirs)
+@@ -1873,20 +1873,18 @@ $(clean-dirs):
+ clean: $(clean-dirs)
+ 	$(call cmd,rmfiles)
+ 	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
+-		\( -name '*.[aios]' -o -name '*.ko' -o -name '.*.cmd' \
+-		-o -name '*.ko.*' \
+-		-o -name '*.dtb' -o -name '*.dtb.S' -o -name '*.dt.yaml' \
+-		-o -name '*.dwo' -o -name '*.lst' \
+-		-o -name '*.su' -o -name '*.mod' \
+-		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
  		-o -name '*.lex.c' -o -name '*.tab.[ch]' \
  		-o -name '*.asn1.[ch]' \
  		-o -name '*.symtypes' -o -name 'modules.order' \
@@ -28,7 +37,8 @@ index b250c536894f7..52b3bfc375d41 100644
 +		-o -name '.tmp_*_vermerged.[co]' \
  		-o -name '*.c.[012]*.*' \
  		-o -name '*.ll' \
--		-o -name '*.gcno' \) -type f -print | xargs rm -f
+-		-o -name '*.gcno' \
+-		-o -name '*.*.symversions' \) -type f -print | xargs rm -f
 +		-o -name '*.gcno' -o -name '.kallsyms.pad' \) -type f -print | xargs rm -f
  
  # Generate tags for editors

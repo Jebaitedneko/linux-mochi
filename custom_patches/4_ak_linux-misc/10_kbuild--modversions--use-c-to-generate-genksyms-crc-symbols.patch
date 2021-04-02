@@ -173,7 +173,7 @@ index 0d7f82599ce85..d114f95760fc4 100644
       $(patsubst y,-R,$(CONFIG_MODULE_REL_CRCS))                             \
       $(if $(KBUILD_PRESERVE),-p)                                            \
       -r $(firstword $(wildcard $(2:.symtypes=.symref) /dev/null))
-@@ -157,24 +159,25 @@ ifdef CONFIG_MODVERSIONS
+@@ -159,14 +159,16 @@ ifdef CONFIG_MODVERSIONS
  # When module versioning is enabled the following steps are executed:
  # o compile a <file>.o from <file>.c
  # o if <file>.o doesn't contain a __ksymtab version, i.e. does
@@ -195,6 +195,9 @@ index 0d7f82599ce85..d114f95760fc4 100644
 +# o We also generate a .ver.o, but that is only used by modpost
 +#   in case this was a single file module.
  
+ ifdef CONFIG_LTO_CLANG
+ # Generate .o.symversions files for each .o with exported symbols, and link these
+@@ -180,12 +182,11 @@ else
  cmd_modversions_c =								\
  	if $(OBJDUMP) -h $@ | grep -q __ksymtab; then				\
  		$(call cmd_gensymtypes_c,$(KBUILD_SYMTYPES),$(@:.o=.symtypes))	\
@@ -210,6 +213,7 @@ index 0d7f82599ce85..d114f95760fc4 100644
 +	else									\
 +		echo > $(@D)/$(@F:.o=.ver.c);					\
  	fi
+ endif
  endif
  
 @@ -317,7 +320,7 @@ cmd_gensymtypes_S =                                                         \
@@ -248,9 +252,9 @@ index 0d7f82599ce85..d114f95760fc4 100644
  
  $(obj)/built-in.a: $(real-obj-y) FORCE
  	$(call if_changed,ar_builtin)
-@@ -425,8 +427,10 @@ $(obj)/lib.a: $(lib-y) FORCE
- # module is turned into a multi object module, $^ will contain header file
- # dependencies recorded in the .*.cmd file.
+@@ -444,8 +443,10 @@ cmd_link_multi-m =						\
+ 	$(AR) cDPrsT $@ $(filter %.o,$^)
+ else
  quiet_cmd_link_multi-m = LDFINAL [M]  $@
 -      cmd_link_multi-m = $(LDFINAL) $(ld_flags) -r $(KBUILD_MOD_LDFLAGS) \
 -				-o $@ $(filter %.o,$^)
@@ -258,9 +262,9 @@ index 0d7f82599ce85..d114f95760fc4 100644
 +		$(LDFINAL) $(ld_flags) -r $(KBUILD_MOD_LDFLAGS) \
 +				-o $@ $(filter %.o,$^) $$TO; \
 +		$(call update-ksyms,$@)
+ endif
  
  $(multi-used-m): FORCE
- 	$(call if_changed,link_multi-m)
 diff --git a/scripts/Makefile.crc b/scripts/Makefile.crc
 new file mode 100644
 index 0000000000000..c0317a6c409ac
@@ -321,10 +325,10 @@ index 6ad4a89b14874..32a96d7bcc085 100644
  
  # for c_flags
  include $(srctree)/scripts/Makefile.lib
-@@ -32,9 +33,10 @@ ARCH_POSTLINK := $(wildcard $(srctree)/arch/$(SRCARCH)/Makefile.postlink)
+@@ -52,9 +52,10 @@ endif # CONFIG_LTO_CLANG
  
  quiet_cmd_ld_ko_o = LDFINAL [M]  $@
-       cmd_ld_ko_o =                                                     \
+       cmd_ld_ko_o +=							\
 +	$(call merge_ksyms,.ko,$(filter-out %.mod.o,$(filter %.o,$^)));	\
  	$(LDFINAL) -r $(KBUILD_MOD_LDFLAGS) $(KBUILD_LDFLAGS)		\
  		$(KBUILD_LDFLAGS_MODULE) $(LDFLAGS_MODULE)		\

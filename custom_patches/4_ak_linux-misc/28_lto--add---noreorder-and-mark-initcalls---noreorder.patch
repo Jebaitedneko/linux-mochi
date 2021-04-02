@@ -16,8 +16,7 @@ it for initcalls.
 Signed-off-by: Andi Kleen <ak@linux.intel.com>
 ---
  include/linux/compiler_attributes.h | 11 +++++++++++
- include/linux/init.h                |  2 +-
- 2 files changed, 12 insertions(+), 1 deletion(-)
+ 1 file changed, 11 insertions(+), 0 deletions(-)
 
 diff --git a/include/linux/compiler_attributes.h b/include/linux/compiler_attributes.h
 index ea5e04e75845c..0995afc6d5a94 100644
@@ -46,17 +45,18 @@ index ea5e04e75845c..0995afc6d5a94 100644
 +#endif
 +
  #endif /* __LINUX_COMPILER_ATTRIBUTES_H */
+ 
 diff --git a/include/linux/init.h b/include/linux/init.h
-index e668832ef66ad..f1e627643ec53 100644
+index a01f01c..3cea1ab 100644
 --- a/include/linux/init.h
 +++ b/include/linux/init.h
-@@ -193,7 +193,7 @@ extern bool initcall_debug;
+@@ -245,7 +245,7 @@ extern bool initcall_debug;
  	    ".previous					\n");
  #else
- #define ___define_initcall(fn, id, __sec) \
--	static initcall_t __initcall_##fn##id __used \
-+	static initcall_t __initcall_##fn##id __used __noreorder \
- 		__attribute__((__section__(#__sec ".init"))) = fn;
+ #define ____define_initcall(fn, __unused, __name, __sec)	\
+-	static initcall_t __name __used 			\
++	static initcall_t __name __used __noreorder			\
+ 		__attribute__((__section__(__sec))) = fn;
  #endif
  
 -- 
