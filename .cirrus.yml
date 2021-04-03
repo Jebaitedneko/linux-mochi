@@ -1,5 +1,6 @@
 arch_task:
     timeout_in: 120m
+    only_if: $CIRRUS_BRANCH == 'master'
     setup_script:
         - pacman -Syu --needed --noconfirm base-devel ccache xmlto inetutils bc cpio python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
         - sed -i '/E_ROOT/d' /usr/bin/makepkg
