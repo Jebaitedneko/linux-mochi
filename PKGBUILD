@@ -143,6 +143,8 @@ export KBUILD_BUILD_USER=${KBUILD_BUILD_USER:-makepkg}
 export KBUILD_BUILD_TIMESTAMP=${KBUILD_BUILD_TIMESTAMP:-$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})}
 
 prepare() {
+  [ ! -d ../proton-clang ] && git clone --depth=1 https://github.com/kdrag0n/proton-clang ../proton-clang
+  PATH="../proton-clang/bin:${PATH}" clang --version
   cd linux-${_major}  
   
   msg2 "Xanmod patch not found. Applying workaround..."
@@ -271,24 +273,24 @@ prepare() {
     echo
   fi
 
-  make LLVM=1 LLVM_IAS=1 olddefconfig
+  PATH="../../proton-clang/bin:${PATH}" make LLVM=1 LLVM_IAS=1 olddefconfig
 
-  ### Optionally load needed modules for the make LLVM=1 LLVM_IAS=1 localmodconfig
+  ### Optionally load needed modules for the make localmodconfig
   # See https://aur.archlinux.org/packages/modprobed-db
   if [ "$_localmodcfg" = "y" ]; then
     if [ -f $HOME/.config/modprobed.db ]; then
-      msg2 "Running Steven Rostedt's make LLVM=1 LLVM_IAS=1 localmodconfig now"
-      make LLVM=1 LLVM_IAS=1 LSMOD=$HOME/.config/modprobed.db localmodconfig
+      msg2 "Running Steven Rostedt's make localmodconfig now"
+      PATH="../../proton-clang/bin:${PATH}" make LLVM=1 LLVM_IAS=1 LSMOD=$HOME/.config/modprobed.db localmodconfig
     else
       msg2 "No modprobed.db data found"
       exit
     fi
   fi
 
-  make LLVM=1 LLVM_IAS=1 -s kernelrelease > version
+  PATH="../../proton-clang/bin:${PATH}" make LLVM=1 LLVM_IAS=1 -s kernelrelease > version
   msg2 "Prepared %s version %s" "$pkgbase" "$(<version)"
 
-  [[ -z "$_makenconfig" ]] || make LLVM=1 LLVM_IAS=1 nconfig
+  [[ -z "$_makenconfig" ]] || PATH="../../proton-clang/bin:${PATH}" make LLVM=1 LLVM_IAS=1 nconfig
 
   # save configuration for later reuse
   cat .config > "${startdir}/config.last"
@@ -298,6 +300,7 @@ build() {
   cd linux-${_major}
   if [ "$cibuild" = "y" ]; then
     msg2 "CI Build Starting..."
+    PATH="../../proton-clang/bin:${PATH}" \
     make LLVM=1 LLVM_IAS=1 \
 	CC="clang" \
 	CXX="clang++" \
@@ -319,6 +322,7 @@ build() {
     -j$((`nproc`+2)) all
   else
     msg2 "Normal Build Starting..."
+    PATH="../../proton-clang/bin:${PATH}" \
     make LLVM=1 LLVM_IAS=1 \
 	CC="ccache clang" \
 	CXX="ccache clang++" \
@@ -358,7 +362,7 @@ _package() {
   msg2 "Installing boot image..."
   # systemd expects to find the kernel here to allow hibernation
   # https://github.com/systemd/systemd/commit/edda44605f06a41fb86b7ab8128dcf99161d2344
-  install -Dm644 "$(make LLVM=1 LLVM_IAS=1 -s image_name)" "$modulesdir/vmlinuz"
+  install -Dm644 "$(PATH="../../proton-clang/bin:${PATH}" make LLVM=1 LLVM_IAS=1 -s image_name)" "$modulesdir/vmlinuz"
 
   # Used by mkinitcpio to name the kernel
   local _cpio_name=`echo $pkgbase | sed "s/linux-//g"`
@@ -372,7 +376,7 @@ _package() {
   echo "${pkgver}-${pkgrel}-${_kver} x64" | install -Dm644 /dev/stdin "${pkgdir}/boot/${pkgbase}.kver"
 
   msg2 "Installing modules..."
-  make LLVM=1 LLVM_IAS=1 INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
+  PATH="../../proton-clang/bin:${PATH}" make LLVM=1 LLVM_IAS=1 INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
 
   # remove build and source links
   rm "$modulesdir"/{source,build}
