@@ -34,6 +34,15 @@ get_patches() {
 	[ -d custom_patches/${j}_${dirname} ] && rm -rf custom_patches/${j}_${dirname}
 	mv $dirname custom_patches/${j}_${dirname} && j=$((j+1))
 }
+get_sha() {
+	if [[ `echo $1 | grep github` ]]; then
+		echo "Github URL detected."
+		curl -s "${1}" | grep "Copy the full SHA" | cut -f2 -d \"
+	else
+		echo "Non-Github URL detected."
+		curl -s "${1}" | grep -E "[0-9a-f]{40}" | sed "s/.*id=//g;s/'>.*//g"
+	fi
+}
 # for fetching sha: curl -s "repo_link" | grep "Copy the full SHA" | cut -f2 -d \"
 # for fetching sha from korg curl -s "repo_link" | grep -E "[0-9a-f]{40}" | sed "s/.*id=//g;s/'>.*//g"
 # for cleanup: cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '
