@@ -18,15 +18,15 @@ diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
 index fa235299c9f7..c0eebbbe5555 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
-@@ -95,6 +95,8 @@ config X86
+@@ -93,6 +93,8 @@ config X86
+ 	select ARCH_SUPPORTS_ACPI
  	select ARCH_SUPPORTS_ATOMIC_RMW
- 	select ARCH_SUPPORTS_DEBUG_PAGEALLOC
  	select ARCH_SUPPORTS_NUMA_BALANCING	if X86_64
 +	select ARCH_SUPPORTS_LTO_CLANG		if X86_64
 +	select ARCH_SUPPORTS_LTO_CLANG_THIN	if X86_64
- 	select ARCH_SUPPORTS_KMAP_LOCAL_FORCE_MAP	if NR_CPUS <= 4096
  	select ARCH_USE_BUILTIN_BSWAP
  	select ARCH_USE_QUEUED_RWLOCKS
+ 	select ARCH_USE_QUEUED_SPINLOCKS
 diff --git a/arch/x86/Makefile b/arch/x86/Makefile
 index d475323be684..32655806c4ab 100644
 --- a/arch/x86/Makefile

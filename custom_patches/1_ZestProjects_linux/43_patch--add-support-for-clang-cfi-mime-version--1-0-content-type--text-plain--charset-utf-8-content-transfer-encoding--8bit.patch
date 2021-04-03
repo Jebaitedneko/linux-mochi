@@ -725,15 +725,15 @@ index 4fe560153125..98cc44f3546c 100644
  	/* This may be empty, but that's OK */
  	module_arch_freeing_init(mod);
  	module_memfree(mod->init_layout.base);
-@@ -3993,6 +3993,8 @@ static int unknown_module_param_cb(char *param, char *val, const char *modname,
+@@ -3839,6 +3844,8 @@ static int unknown_module_param_cb(char *param, char *val, const char *modname,
  	return 0;
  }
  
 +static void cfi_init(struct module *mod);
 +
- /*
-  * Allocate and load the module: note that size of section 0 is always
-  * zero, and we rely on this for optional sections.
+ /* Allocate and load the module: note that size of section 0 is always
+    zero, and we rely on this for optional sections. */
+ static int load_module(struct load_info *info, const char __user *uargs,
 @@ -3942,6 +3949,9 @@ static int load_module(struct load_info *info, const char __user *uargs,
  
  	flush_module_icache(mod);
