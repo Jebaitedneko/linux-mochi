@@ -196,10 +196,10 @@ prepare() {
   done
   # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
   # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
-  scripts/config --enable CONFIG_LTO_CLANG_FULL
-  scripts/config --enable CONFIG_CFI_CLANG
+  # scripts/config --enable CONFIG_LTO_CLANG_FULL
+  # scripts/config --enable CONFIG_CFI_CLANG
   scripts/config --enable CONFIG_DXGKRNL
-  scripts/config --enable CONFIG_POLLY_CLANG
+  # scripts/config --enable CONFIG_POLLY_CLANG
 
   scripts/config --enable CONFIG_BOOTSPLASH
   
