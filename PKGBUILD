@@ -194,6 +194,19 @@ prepare() {
   done
   # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
   # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
+  scripts/config --enable CONFIG_INIT_STACK_ALL_ZERO
+  scripts/config --disable CONFIG_DEBUG_KERNEL
+  scripts/config --disable CONFIG_DEBUG_MISC
+  scripts/config --disable CONFIG_DEBUG_WX
+  scripts/config --disable CONFIG_SCHED_DEBUG
+  scripts/config --disable CONFIG_KALLSYMS_ALL
+  scripts/config --disable CONFIG_PM_DEBUG
+  scripts/config --disable CONFIG_PM_ADVANCED_DEBUG
+  scripts/config --disable CONFIG_PM_SLEEP_DEBUG
+  scripts/config --disable CONFIG_ACPI_DEBUG
+  scripts/config --disable CONFIG_SCSI_DEBUG
+  scripts/config --disable CONFIG_SCSI_LOGGING
+  scripts/config --disable CONFIG_HAVE_DEBUG_KMEMLEAK
 
   scripts/config --enable CONFIG_BOOTSPLASH
   
