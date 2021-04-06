@@ -13,3 +13,7 @@ steps:
     - cd /drone/src
     - env cibuild=y _microarchitecture=0 makepkg -s --skipinteg --skipchecksums --skippgpcheck
     - bash upload.sh
+
+trigger:
+  event:
+  - custom
