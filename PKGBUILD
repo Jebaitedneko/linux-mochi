@@ -116,8 +116,8 @@ pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
-
-__commit="0b6bb610e35c89af8a20e9e267bc09c942827501" # 5.11.11-1
+_xanmod_str=${pkgver}-xanmod${xanmod}
+_manjaro_sha="0b6bb610e35c89af8a20e9e267bc09c942827501" # 5.11.11-1
 
 license=(GPL2)
 makedepends=(
@@ -125,11 +125,11 @@ makedepends=(
   python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
 )
 options=('!strip')
-_srcname="linux-${pkgver}-xanmod${xanmod}"
+_srcname="linux-$_xanmod_str"
 source=("https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
-        "https://github.com/xanmod/linux/releases/download/${pkgver}-xanmod${xanmod}/patch-${pkgver}-xanmod${xanmod}.xz"
+        "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
         choose-gcc-optimization.sh
-        "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${__commit}/linux11-${__commit}.tar.gz")
+        "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz")
 
 sha256sums=('SKIP'  # kernel tar.xz
             'SKIP'  #        tar.sign
@@ -150,7 +150,7 @@ done
 # If use_cachy=y then download cachy patch
 if [ "$use_cachy" = "y" ]; then
    echo "Cachy branch is not ready yet..." && exit 1
-   source+=("https://github.com/xanmod/linux/releases/download/${pkgver}-xanmod${xanmod}-cachy/patch-${pkgver}-xanmod${xanmod}-cachy.xz")
+   source+=("https://github.com/xanmod/linux/releases/download/$_xanmod_str-cachy/patch-$_xanmod_str-cachy.xz")
    sha256sums+=('c35685c5d706a683fc0b02cf11fd40db52becae9205bf0d71f6a4a901d836d69')
 fi
 
@@ -162,14 +162,14 @@ prepare() {
   cd linux-${_major}  
   
   msg2 "Xanmod patch not found. Applying workaround..."
-  [ ! -f ../../patch-${pkgver}-xanmod${xanmod} ] \
-    && xz -d ../../patch-${pkgver}-xanmod${xanmod}.xz \
-    && mv ../../patch-${pkgver}-xanmod${xanmod} ../
+  [ ! -f ../../patch-$_xanmod_str ] \
+    && xz -d ../../patch-$_xanmod_str.xz \
+    && mv ../../patch-$_xanmod_str ../
   # Apply Xanmod patch
   if [ "$use_cachy" = "y" ]; then
-    patch -Np1 -i ../patch-${pkgver}-xanmod${xanmod}-cachy
+    patch -Np1 -i ../patch-$_xanmod_str-cachy
   else
-    patch -Np1 -i ../patch-${pkgver}-xanmod${xanmod}
+    patch -Np1 -i ../patch-$_xanmod_str
   fi
 
   local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
@@ -189,15 +189,15 @@ prepare() {
   done
   
   # Manjaro patches
-  rm ../linux511-$__commit/0103-futex.patch  # remove conflicting one
-  rm ../linux511-$__commit/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-CLONE_NEWUSER.patch # not needed
+  rm ../linux511-$_manjaro_sha/0103-futex.patch  # remove conflicting one
+  rm ../linux511-$_manjaro_sha/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-CLONE_NEWUSER.patch # not needed
   local _patch
-  for _patch in ../linux511-$__commit/*; do
+  for _patch in ../linux511-$_manjaro_sha/*; do
       [[ $_patch = *.patch ]] || continue
       msg2 "Applying patch: $_patch..."
-      patch -Np1 < "../linux511-$__commit/$_patch"
+      patch -Np1 < "../linux511-$_manjaro_sha/$_patch"
   done 
-  git apply -p1 < "../linux511-$__commit/0513-bootsplash.gitpatch"
+  git apply -p1 < "../linux511-$_manjaro_sha/0513-bootsplash.gitpatch"
 
   # Custom Patches
   # ( cd ../../ && ./getpatches.sh ) # uncomment to re-enable auto-fetching
