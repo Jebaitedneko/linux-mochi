@@ -80,15 +80,31 @@ _makenconfig=
 
 ### IMPORTANT: Do no edit below this line unless you know what you're doing
 
-# Change package name according to arch
-if [ $_microarchitecture == 10 ]; then
-pkgbase=linux-manjaro-xanmod-mochi-piledriver
-else
-if [ $_microarchitecture == 0 ]; then
-pkgbase=linux-manjaro-xanmod-mochi-generic
-else
-pkgbase=linux-manjaro-xanmod-mochi
+# Change package name according to arch.
+local active_arch=$(
+  if [[ $_microarchitecture != 0 ]]; then
+    cat choose-gcc-optimization.sh |\
+    grep "${_microarchitecture})" |\
+    grep -Eo "CONFIG.*" |\
+    cut -f1 -d ' ' |\
+    sed "s/CONFIG_M//g" |\
+    head -1
+  else
+    if [[ $_microarchitecture == 99 ]]; then
+      echo "NATIVE"
+    fi
+    echo "GENERIC"
+  fi
+)
+
+# Check for custom pkgbase name, default is the extracted pkgbase.
+if [ -z ${custpkgbase+x} ]; then
+  pkgbase=linux-manjaro-xanmod-mochi-${active_arch,,}
 fi
+
+# If custom name is present, use it.
+if [ "$custpkgbase" != "" ]; then
+  pkgbase=linux-$custpkgbase
 fi
 
 pkgname=("${pkgbase}" "${pkgbase}-headers")
