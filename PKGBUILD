@@ -263,8 +263,8 @@ prepare() {
   curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch" > cacule-${_major}.patch
   msg2 "Applying cacule patch"
   patch -Np1 < cacule-${_major}.patch
-  # scripts/config --disable CONFIG_CACULE_SCHED
-  scripts/config --enable CACULE_RDB
+  scripts/config --disable CONFIG_CACULE_SCHED
+  # scripts/config --enable CACULE_RDB
 
   scripts/config --enable CONFIG_BOOTSPLASH
 
