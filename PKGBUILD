@@ -197,10 +197,13 @@ prepare() {
   sed -i "/ARCH_HAS_DEBUG_VIRTUAL/d" arch/x86/Kconfig
   sed -i "/ARCH_HAS_DEBUG_VM_PGTABLE/d" arch/x86/Kconfig
   sed -i "/ARCH_SUPPORTS_DEBUG_PAGEALLOC/d" arch/x86/Kconfig
+  sed -i "/SYSCTL_EXCEPTION_TRACE/d" arch/x86/Kconfig
+  sed -i "/TASKS_TRACE_RCU/d" init/Kconfig
   sed -i "s/if EXPERT/if !EXPERT/g" arch/x86/Kconfig.debug
   sed -i "s/default !EXPERT/default EXPERT/g" lib/Kconfig.debug
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/ulp/ipoib/Kconfig
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/hw/mthca/Kconfig
+  sed -i "s/def_bool BT_CMTP/def_bool n/g;s/&&/||/g" drivers/isdn/capi/Kconfig
   # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
   # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
   scripts/config --enable CONFIG_INIT_STACK_ALL_ZERO
@@ -242,6 +245,14 @@ prepare() {
   scripts/config --disable CONFIG_SYSTEM_DATA_VERIFICATION
   scripts/config --disable CONFIG_MODULE_SIG
   scripts/config --disable CONFIG_MODULE_SIG_ALL
+  scripts/config --disable CONFIG_TASKS_TRACE_RCU
+  scripts/config --disable CONFIG_SCSI_IPR_TRACE
+  scripts/config --disable CONFIG_BRCM_TRACING
+  scripts/config --disable CONFIG_TRACE_ROUTER
+  scripts/config --disable CONFIG_TRACE_SINK
+  scripts/config --disable CONFIG_NETFILTER_XT_TARGET_TRACE
+  scripts/config --disable CONFIG_CAPI_TRACE
+  scripts/config --disable CONFIG_HAVE_STACK_VALIDATION
 
   msg2 "Getting hamadmarri's auto config"
   curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/cachy%20debug%20helper%20files/apply_suggested_configs.sh" > apply_suggested_configs.sh
@@ -252,7 +263,8 @@ prepare() {
   curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch" > cacule-${_major}.patch
   msg2 "Applying cacule patch"
   patch -Np1 < cacule-${_major}.patch
-  scripts/config --disable CONFIG_CACULE_SCHED
+  # scripts/config --disable CONFIG_CACULE_SCHED
+  scripts/config --enable CACULE_RDB
 
   scripts/config --enable CONFIG_BOOTSPLASH
 
