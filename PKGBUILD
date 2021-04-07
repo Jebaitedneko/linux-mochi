@@ -197,6 +197,7 @@ prepare() {
   sed -i "/ARCH_HAS_DEBUG_VIRTUAL/d" arch/x86/Kconfig
   sed -i "/ARCH_HAS_DEBUG_VM_PGTABLE/d" arch/x86/Kconfig
   sed -i "/ARCH_SUPPORTS_DEBUG_PAGEALLOC/d" arch/x86/Kconfig
+  sed -i "s/if EXPERT/if !EXPERT/g" arch/x86/Kconfig.debug
   sed -i "s/default !EXPERT/default EXPERT/g" lib/Kconfig.debug
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/ulp/ipoib/Kconfig
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/hw/mthca/Kconfig
@@ -237,6 +238,10 @@ prepare() {
   scripts/config --disable CONFIG_X86_DEBUGCTLMSR
   scripts/config --disable CONFIG_INFINIBAND_IPOIB_DEBUG
   scripts/config --disable CONFIG_INFINIBAND_MTHCA_DEBUG
+  scripts/config --disable PAGE_POISONING
+  scripts/config --disable CONFIG_SYSTEM_DATA_VERIFICATION
+  scripts/config --disable CONFIG_MODULE_SIG
+  scripts/config --disable CONFIG_MODULE_SIG_ALL
 
   msg2 "Getting hamadmarri's auto config"
   curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/cachy%20debug%20helper%20files/apply_suggested_configs.sh" > apply_suggested_configs.sh
@@ -247,11 +252,9 @@ prepare() {
   curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch" > cacule-${_major}.patch
   msg2 "Applying cacule patch"
   patch -Np1 < cacule-${_major}.patch
+  scripts/config --disable CONFIG_CACULE_SCHED
 
   scripts/config --enable CONFIG_BOOTSPLASH
-  
-  # CONFIG_STACK_VALIDATION gives better stack traces. Also is enabled in all official kernel packages by Archlinux team
-  scripts/config --enable CONFIG_STACK_VALIDATION
 
   # Enable IKCONFIG following Arch's philosophy
   scripts/config --enable CONFIG_IKCONFIG \
@@ -273,16 +276,7 @@ prepare() {
     msg2 "Disabling CONFIG_USER_NS_UNPRIVILEGED"
     scripts/config --disable CONFIG_USER_NS_UNPRIVILEGED
   fi
-    
-  msg2 "add anbox support"
-  scripts/config --enable CONFIG_ASHMEM
-  # CONFIG_ION is not set
-  scripts/config --enable CONFIG_ANDROID
-  scripts/config --enable CONFIG_ANDROID_BINDER_IPC
-  scripts/config --enable CONFIG_ANDROID_BINDERFS
-  scripts/config --set-str CONFIG_ANDROID_BINDER_DEVICES "binder,hwbinder,vndbinder"
-  # CONFIG_ANDROID_BINDER_IPC_SELFTEST is not set
-  
+
   local _hostname=`echo $pkgbase | sed "s/linux-//g"`
   scripts/config --set-str CONFIG_DEFAULT_HOSTNAME "${_hostname}"
 
