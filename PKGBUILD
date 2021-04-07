@@ -44,13 +44,6 @@ if [ -z ${use_tracers+x} ]; then
   use_tracers=n
 fi
 
-## Enable Cachy CPU scheduler by default https://github.com/xanmod/linux/blob/5.8/Documentation/scheduler/sched-Cachy.rst
-## Set variable "use_cachy" to: n to disable (stock Xanmod)
-##                              y to enable
-if [ -z ${use_cachy+x} ]; then
-  use_cachy=n
-fi
-
 ## Enable CONFIG_USER_NS_UNPRIVILEGED flag https://aur.archlinux.org/cgit/aur.git/tree/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-C.patch?h=linux-ck
 ## Set variable "use_ns" to: n to disable (stock Xanmod)
 ##                           y to enable (stock Archlinux)
@@ -147,13 +140,6 @@ for _patch in $_commits; do
     source+=("${_patch}.patch::https://git.archlinux.org/linux.git/patch/?id=${_patch}")
 done
 
-# If use_cachy=y then download cachy patch
-if [ "$use_cachy" = "y" ]; then
-   echo "Cachy branch is not ready yet..." && exit 1
-   source+=("https://github.com/xanmod/linux/releases/download/$_xanmod_str-cachy/patch-$_xanmod_str-cachy.xz")
-   sha256sums+=('c35685c5d706a683fc0b02cf11fd40db52becae9205bf0d71f6a4a901d836d69')
-fi
-
 export KBUILD_BUILD_HOST=${KBUILD_BUILD_HOST:-archlinux}
 export KBUILD_BUILD_USER=${KBUILD_BUILD_USER:-makepkg}
 export KBUILD_BUILD_TIMESTAMP=${KBUILD_BUILD_TIMESTAMP:-$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})}
@@ -165,12 +151,9 @@ prepare() {
   [ ! -f ../../patch-$_xanmod_str ] \
     && xz -d ../../patch-$_xanmod_str.xz \
     && mv ../../patch-$_xanmod_str ../
+
   # Apply Xanmod patch
-  if [ "$use_cachy" = "y" ]; then
-    patch -Np1 -i ../patch-$_xanmod_str-cachy
-  else
-    patch -Np1 -i ../patch-$_xanmod_str
-  fi
+  patch -Np1 -i ../patch-$_xanmod_str
 
   local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
   msg2 "Setting version to ${_localversion}"
@@ -243,11 +226,6 @@ prepare() {
   if [ "$use_numa" = "n" ]; then
     msg2 "Disabling NUMA..."
     scripts/config --disable CONFIG_NUMA
-  fi
-
-  if [ "$use_cachy" = "y" ]; then
-    msg2 "Enabling Cachy CPU scheduler by default..."
-    scripts/config --enable CONFIG_CACHY_SCHED
   fi
 
   if [ "$use_ns" = "n" ]; then
