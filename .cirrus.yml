@@ -2,8 +2,8 @@ arch_task:
     only_if: $CIRRUS_CHANGE_TITLE =~ "cirrus[:] r[0-9]+" && $CIRRUS_BRANCH == 'master'
     timeout_in: 120m
     setup_script:
-        - pacman -Syu --needed --noconfirm \
-            xmlto inetutils bc cpio python-sphinx \
+        - pacman -Syu --needed --noconfirm
+            base-devel xmlto inetutils bc cpio python-sphinx
             python-sphinx_rtd_theme graphviz imagemagick git
         - sed -i '/E_ROOT/d' /usr/bin/makepkg
         - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
@@ -11,17 +11,17 @@ arch_task:
     matrix:
       - name: generic
         container:
-            image: archlinux/base-devel
+            image: archlinux/base
             cpu: 4
             memory: 16G
         generic_script:
             - env cibuild=y _microarchitecture=0 makepkg -sCcf --skipinteg --skipchecksums --skippgpcheck
-      - name: piledriver
+      - name: ivybridge
         container:
-            image: archlinux/base-devel
+            image: archlinux/base
             cpu: 4
             memory: 16G
         piledriver_script:
-            - env cibuild=y _microarchitecture=10 makepkg -sCcf --skipinteg --skipchecksums --skippgpcheck
+            - env cibuild=y _microarchitecture=34 makepkg -sCcf --skipinteg --skipchecksums --skippgpcheck
     artifacts:
         path: "*.pkg.tar.zst"
