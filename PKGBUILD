@@ -191,6 +191,15 @@ prepare() {
             msg2 "Applying patch ${i} from ${d}" && patch -Np1 < $patch_dir/${d}/${i}_*.patch
     done
   done
+  sed -i "/HAVE_DEBUG_KMEMLEAK/d" arch/x86/Kconfig
+  sed -i "/ARCH_HAS_KCOV/d" arch/x86/Kconfig
+  sed -i "/ARCH_HAS_DEBUG_WX/d" arch/x86/Kconfig
+  sed -i "/ARCH_HAS_DEBUG_VIRTUAL/d" arch/x86/Kconfig
+  sed -i "/ARCH_HAS_DEBUG_VM_PGTABLE/d" arch/x86/Kconfig
+  sed -i "/ARCH_SUPPORTS_DEBUG_PAGEALLOC/d" arch/x86/Kconfig
+  sed -i "s/default !EXPERT/default EXPERT/g" lib/Kconfig.debug
+  sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/ulp/ipoib/Kconfig
+  sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/hw/mthca/Kconfig
   # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
   # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
   scripts/config --enable CONFIG_INIT_STACK_ALL_ZERO
@@ -206,6 +215,38 @@ prepare() {
   scripts/config --disable CONFIG_SCSI_DEBUG
   scripts/config --disable CONFIG_SCSI_LOGGING
   scripts/config --disable CONFIG_HAVE_DEBUG_KMEMLEAK
+  scripts/config --disable CONFIG_HYPERVISOR_GUEST
+  scripts/config --disable CONFIG_IOSF_MBI_DEBUG
+  scripts/config --disable CONFIG_ACPI_DEBUGGER
+  scripts/config --disable CONFIG_ACPI_DEBUGGER_USER
+  scripts/config --disable ARCH_HAS_DEBUG_WX
+  scripts/config --disable CONFIG_MLX4_DEBUG
+  scripts/config --disable CONFIG_NFS_DEBUG
+  scripts/config --disable LOCK_DEBUGGING_SUPPORT
+  scripts/config --disable CONFIG_SUNRPC_DEBUG
+  scripts/config --disable CONFIG_PUNIT_ATOM_DEBUG
+  scripts/config --disable CONFIG_ACPI_EC_DEBUGFS
+  scripts/config --disable CONFIG_RTW88_DEBUG
+  scripts/config --disable CONFIG_RTW88_DEBUGFS
+  scripts/config --disable CONFIG_WILCO_EC_DEBUGFS
+  scripts/config --disable CONFIG_THINKPAD_ACPI_DEBUGFACILITIES
+  scripts/config --disable CONFIG_DEBUG_MEMORY_INIT
+  scripts/config --disable CONFIG_CIFS_DEBUG
+  scripts/config --disable CONFIG_DYNAMIC_DEBUG
+  scripts/config --disable CONFIG_DYNAMIC_DEBUG_CORE
+  scripts/config --disable CONFIG_X86_DEBUGCTLMSR
+  scripts/config --disable CONFIG_INFINIBAND_IPOIB_DEBUG
+  scripts/config --disable CONFIG_INFINIBAND_MTHCA_DEBUG
+
+  msg2 "Getting hamadmarri's auto config"
+  curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/cachy%20debug%20helper%20files/apply_suggested_configs.sh" > apply_suggested_configs.sh
+  msg2 "Applying auto config"
+  chmod +x apply_suggested_configs.sh
+  ./apply_suggested_configs.sh
+  msg2 "Getting hamadmarri's cacule sched"
+  curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch" > cacule-${_major}.patch
+  msg2 "Applying cacule patch"
+  patch -Np1 < cacule-${_major}.patch
 
   scripts/config --enable CONFIG_BOOTSPLASH
   
