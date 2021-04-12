@@ -12,7 +12,7 @@ steps:
     - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
     - cd /drone/src
     - env cibuild=y _microarchitecture=0 makepkg -s --skipinteg --skipchecksums --skippgpcheck
-    - bash upload.sh
+    - bash misc/upload.sh
 
 trigger:
   event:
@@ -34,7 +34,7 @@ steps:
     - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
     - cd /drone/src
     - env cibuild=y _microarchitecture=10 makepkg -s --skipinteg --skipchecksums --skippgpcheck
-    - bash upload.sh
+    - bash misc/upload.sh
 
 trigger:
   event:
