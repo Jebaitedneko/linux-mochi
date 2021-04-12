@@ -25,13 +25,13 @@ get_patches() {
 		&& i=$((i+1))
 	done
 
-	[ -d custom_patches/${j}_${dirname} ] && rm -rf custom_patches/${j}_${dirname}
-	mv $dirname custom_patches/${j}_${dirname} && j=$((j+1))
+	[ -d misc/patches/${j}_${dirname} ] && rm -rf misc/patches/${j}_${dirname}
+	mv $dirname misc/patches/${j}_${dirname} && j=$((j+1))
 }
 # for fetching sha: curl "repo_link" | grep "Copy the full SHA" | cut -f2 -d \" | grep -v "[0-9]:[0-9]"
 # for cleanup: cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '
-# for regenerating: for l in $(cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '); do sed -i "/${l}/d" ../../../.custom_patches; done
-source .custom_patches
+# for regenerating: for l in $(cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '); do sed -i "/${l}/d" ../../../patchsrc; done
+source misc/patchsrc
 get_patches $kaz_repo "$kaz_commits"
 get_patches $lazer_repo "$lazer_commits"
 get_patches $buzz_repo "$buzz_commits"

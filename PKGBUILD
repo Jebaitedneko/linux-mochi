@@ -20,7 +20,7 @@
 ##
 ##   Example: env _microarchitecture=99 use_numa=n use_tracers=n use_pds=n makepkg -sc
 ##
-## Look inside 'choose-gcc-optimization.sh' to choose your microarchitecture
+## Look inside 'misc/choose-gcc-optimization.sh' to choose your microarchitecture
 ## Valid numbers between: 0 to 99
 ## Default is: 0 => generic
 ## Good option if your package is for one machine: 99 => native
@@ -76,7 +76,7 @@ _makenconfig=
 # Change package name according to arch.
 local active_arch=$(
   if [[ $_microarchitecture != 0 ]]; then
-    cat choose-gcc-optimization.sh |\
+    cat misc/choose-gcc-optimization.sh |\
     grep "${_microarchitecture})" |\
     grep -Eo "CONFIG.*" |\
     cut -f1 -d ' ' |\
@@ -107,28 +107,36 @@ _branch=5.x
 xanmod=1
 pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
+
 url="http://www.xanmod.org/"
 arch=(x86_64)
 _xanmod_str=${pkgver}-xanmod${xanmod}
 _manjaro_sha="0b6bb610e35c89af8a20e9e267bc09c942827501" # 5.11.11-1
 
 license=(GPL2)
+
 makedepends=(
   xmlto kmod inetutils bc libelf cpio
   python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
 )
-options=('!strip')
-_srcname="linux-$_xanmod_str"
-source=("https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
-        "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
-        choose-gcc-optimization.sh
-        "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz")
 
-sha256sums=('SKIP'  # kernel tar.xz
-            'SKIP'  #        tar.sign
-            'SKIP'  # xanmod
-            'SKIP'  # choose-gcc-optimization.sh
-            'SKIP') # manjaro
+options=('!strip')
+
+_srcname="linux-$_xanmod_str"
+
+source=(
+    "https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
+    "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
+    "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz"
+)
+
+sha256sums=(
+    "SKIP"
+    "SKIP"
+    "SKIP"
+    "SKIP"
+)
+
 validpgpkeys=(
     'ABAF11C65A2970B130ABE3C479BE3E4300411886' # Linux Torvalds
     '647F28654894E3BD457199BE38DBBDC86092693E' # Greg Kroah-Hartman
@@ -183,8 +191,8 @@ prepare() {
   git apply -p1 < "../linux511-$_manjaro_sha/0513-bootsplash.gitpatch"
 
   # Custom Patches
-  # ( cd ../../ && ./getpatches.sh ) # uncomment to re-enable auto-fetching
-  patch_dir=../../custom_patches
+  # ( cd ../../ && ./misc/getpatches.sh ) # uncomment to re-enable auto-fetching
+  patch_dir=../../misc/patches
   for d in $(cd $patch_dir && ls -1); do
     for i in {1000..0}; do
         [ -f $patch_dir/${d}/${i}_*.patch ] &&
@@ -296,7 +304,7 @@ prepare() {
   scripts/config --enable CONFIG_HZ_1000
 
   # Let's user choose microarchitecture optimization in GCC
-  sh ${srcdir}/choose-gcc-optimization.sh $_microarchitecture
+  sh ../../misc/choose-gcc-optimization.sh $_microarchitecture
 
   # This is intended for the people that want to build this package with their own config
   # Put the file "myconfig" at the package folder to use this feature
