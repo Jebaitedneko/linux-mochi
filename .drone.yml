@@ -6,7 +6,7 @@ steps:
   image: archlinux:base-devel
   commands:
     - curl -fsSL "https://repo.archlinuxcn.org/x86_64/glibc-linux4-2.33-4-x86_64.pkg.tar.zst" | bsdtar -C / -xvf -
-    - pacman -Syu --needed --noconfirm ccache xmlto inetutils bc cpio python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
+    - pacman -Syu --needed --noconfirm
     - sed -i '/E_ROOT/d' /usr/bin/makepkg
     - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
     - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
@@ -28,7 +28,7 @@ steps:
   image: archlinux:base-devel
   commands:
     - curl -fsSL "https://repo.archlinuxcn.org/x86_64/glibc-linux4-2.33-4-x86_64.pkg.tar.zst" | bsdtar -C / -xvf -
-    - pacman -Syu --needed --noconfirm ccache xmlto inetutils bc cpio python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
+    - pacman -Syu --needed --noconfirm
     - sed -i '/E_ROOT/d' /usr/bin/makepkg
     - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
     - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
