@@ -371,12 +371,17 @@ prepare() {
 
 build() {
   cd linux-${_major}
+  wget https://github.com/kdrag0n/proton-clang/raw/master/bin/lld -O ld.lld && chmod +x ld.lld
   if [ "$cibuild" = "y" ]; then
     msg2 "CI Build Starting..."
-    make -j$((`nproc`+2)) all
+    make -j$((`nproc`+2)) \
+    LD=$(pwd)/ld.lld HOSTLD=$(pwd)/ld.lld \
+    all
   else
     msg2 "Normal Build Starting..."
-    make -j$((`nproc`+2)) CC="ccache gcc" all
+    make -j$((`nproc`+2)) CC="ccache gcc" \
+    LD=$(pwd)/ld.lld HOSTLD=$(pwd)/ld.lld \
+    all
   fi
 }
 
