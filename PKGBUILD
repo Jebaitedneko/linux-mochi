@@ -100,18 +100,19 @@ if [ "$custpkgbase" != "" ]; then
   pkgbase=linux-$custpkgbase
 fi
 
-pkgname=("${pkgbase}" "${pkgbase}-headers")
-pkgver=5.11.11
 _major=5.11
 _branch=5.x
 xanmod=1
+
+pkgver=${_major}.13
+pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
 
 url="http://www.xanmod.org/"
 arch=(x86_64)
 _xanmod_str=${pkgver}-xanmod${xanmod}
-_manjaro_sha="0b6bb610e35c89af8a20e9e267bc09c942827501" # 5.11.11-1
+_manjaro_sha="c7855cdcf1efebe4dcdceefeb0e42dbbc7d38196" # 5.11.13-1
 
 license=(GPL2)
 
