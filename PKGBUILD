@@ -241,6 +241,21 @@ prepare() {
   scripts/config --disable CONFIG_RTW88_DEBUG
   scripts/config --disable CONFIG_RTW88_DEBUGFS
   scripts/config --disable CONFIG_WILCO_EC_DEBUGFS
+  scripts/config --disable CONFIG_WIL6210_DEBUGFS
+  scripts/config --disable CONFIG_SMS_SIANO_DEBUGFS
+  scripts/config --disable CONFIG_MAC80211_DEBUGFS
+  scripts/config --disable CONFIG_ATH10K_DEBUGFS
+  scripts/config --disable CONFIG_ATH9K_DEBUGFS
+  scripts/config --disable CONFIG_ATH9K_HTC_DEBUGFS
+  scripts/config --disable CONFIG_BT_DEBUGFS
+  scripts/config --disable CONFIG_CFG80211_DEBUGFS
+  scripts/config --disable CONFIG_CROS_EC_DEBUGFS
+  scripts/config --disable CONFIG_IEEE802154_AT86RF230_DEBUGFS
+  scripts/config --disable CONFIG_IEEE802154_CA8210_DEBUGFS
+  scripts/config --disable CONFIG_IWLEGACY_DEBUGFS
+  scripts/config --disable CONFIG_IWLWIFI_DEBUGFS
+  scripts/config --disable CONFIG_L2TP_DEBUGFS
+  scripts/config --disable CONFIG_BLK_DEBUG_FS
   scripts/config --disable CONFIG_THINKPAD_ACPI_DEBUGFACILITIES
   scripts/config --disable CONFIG_DEBUG_MEMORY_INIT
   scripts/config --disable CONFIG_CIFS_DEBUG
@@ -263,12 +278,12 @@ prepare() {
   scripts/config --disable CONFIG_HAVE_STACK_VALIDATION
 
   msg2 "Getting hamadmarri's auto config"
-  curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/cachy%20debug%20helper%20files/apply_suggested_configs.sh" > apply_suggested_configs.sh
+  wget -q "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/cachy%20debug%20helper%20files/apply_suggested_configs.sh"
   msg2 "Applying auto config"
   chmod +x apply_suggested_configs.sh
   ./apply_suggested_configs.sh
   msg2 "Getting hamadmarri's cacule sched"
-  curl -s "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch" > cacule-${_major}.patch
+  wget -q "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch"
   msg2 "Applying cacule patch"
   patch -Np1 < cacule-${_major}.patch
   scripts/config --disable CONFIG_CACULE_SCHED
