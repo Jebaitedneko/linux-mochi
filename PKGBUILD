@@ -126,13 +126,12 @@ options=('!strip')
 _srcname="linux-$_xanmod_str"
 
 source=(
-    "https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
+    "https://git.archlinux.org/linux.git/snapshot/linux-${pkgver}-arch1.tar.gz"
     "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
     "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz"
 )
 
 sha256sums=(
-    "SKIP"
     "SKIP"
     "SKIP"
     "SKIP"
@@ -154,6 +153,7 @@ export KBUILD_BUILD_USER=${KBUILD_BUILD_USER:-makepkg}
 export KBUILD_BUILD_TIMESTAMP=${KBUILD_BUILD_TIMESTAMP:-$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})}
 
 prepare() {
+  mv linux-${pkgver}-arch1 linux-${_major}
   cd linux-${_major}  
   
   msg2 "Xanmod patch not found. Applying workaround..."
@@ -162,7 +162,10 @@ prepare() {
     && mv ../../patch-$_xanmod_str ../
 
   # Apply Xanmod patch
-  patch -Np1 -i ../patch-$_xanmod_str
+#  patch -Np1 -i ../patch-$_xanmod_str
+  mkdir -p ../xanmod
+  ./../../misc/hunks.sh ../patch-${_xanmod_str} ../xanmod
+  ./../../misc/apply_hunks.sh ../xanmod/
 
   local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
   msg2 "Setting version to ${_localversion}"
