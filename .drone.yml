@@ -1,5 +1,5 @@
 kind: pipeline
-name: piledriver-builder
+name: piledriver
 
 steps:
 - name: build
