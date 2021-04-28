@@ -290,6 +290,9 @@ prepare() {
   scripts/config --disable CONFIG_CACULE_SCHED
   # scripts/config --enable CACULE_RDB
 
+  scripts/config --enable CONFIG_LTO
+  scripts/config --enable LTO_GCC
+
   scripts/config --enable CONFIG_BOOTSPLASH
 
   # Enable IKCONFIG following Arch's philosophy
