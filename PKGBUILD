@@ -1,6 +1,6 @@
 # Maintainer: ANDRoid7890 <andrey.android7890@gmail.com>
 
-# https://gitlab.manjaro.org/packages/core/linux511
+# https://gitlab.manjaro.org/packages/core/linux512
 #
 # Maintainer: Philip Müller
 # Maintainer: Bernhard Landauer
@@ -100,11 +100,11 @@ if [ "$custpkgbase" != "" ]; then
   pkgbase=linux-$custpkgbase
 fi
 
-_major=5.11
+_major=5.12
 _branch=5.x
 xanmod=1
 
-pkgver=${_major}.15
+pkgver=${_major}.0
 pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
@@ -112,7 +112,7 @@ pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
 _xanmod_str=${pkgver}-xanmod${xanmod}
-_manjaro_sha="32a92e224750858e414016656a0e1c1e3e86b63c" # 5.11.15-1
+_manjaro_sha="3153154c3de2123c20231c0a259cbc3a0c1f70e7" # 5.12.0-1
 
 license=(GPL2)
 
@@ -128,7 +128,7 @@ _srcname="linux-$_xanmod_str"
 source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
     "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
-    "https://gitlab.manjaro.org/packages/core/linux511/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz"
+    "https://gitlab.manjaro.org/packages/core/linux512/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz"
 )
 
 sha256sums=(
@@ -181,15 +181,15 @@ prepare() {
   done
   
   # Manjaro patches
-  rm ../linux511-$_manjaro_sha/0103-futex.patch  # remove conflicting one
-  rm ../linux511-$_manjaro_sha/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-CLONE_NEWUSER.patch # not needed
+  rm ../linux512-$_manjaro_sha/0103-futex.patch  # remove conflicting one
+  rm ../linux512-$_manjaro_sha/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-CLONE_NEWUSER.patch # not needed
   local _patch
-  for _patch in ../linux511-$_manjaro_sha/*; do
+  for _patch in ../linux512-$_manjaro_sha/*; do
       [[ $_patch = *.patch ]] || continue
       msg2 "Applying patch: $_patch..."
-      patch -Np1 < "../linux511-$_manjaro_sha/$_patch"
+      patch -Np1 < "../linux512-$_manjaro_sha/$_patch"
   done 
-  git apply -p1 < "../linux511-$_manjaro_sha/0513-bootsplash.gitpatch"
+  git apply -p1 < "../linux512-$_manjaro_sha/0513-bootsplash.gitpatch"
 
   # Custom Patches
   # ( cd ../../ && ./misc/getpatches.sh ) # uncomment to re-enable auto-fetching
