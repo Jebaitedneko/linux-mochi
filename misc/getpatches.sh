@@ -19,7 +19,7 @@ get_patches() {
 		"korg")
 			dirname=` echo $1 | grep -oE "([a-z0-9-]+[/][a-z0-9-]+[.]git)" | grep -oE "([a-z0-9-]+)" | head -n1 ` ;;
 	esac
-	echo -e "Getting patches from ${dirname}... from ${3}"
+	echo -e "Getting patches from ${dirname} from ${3}...\n"
 	dir_setup=`rm -rf $dirname && mkdir $dirname`
 	[ -d $dirname ] && $dir_setup || mkdir $dirname
 
@@ -33,6 +33,7 @@ get_patches() {
 				curl -s `echo $1=$l` > $dirname/${i}.patch ;;
 		esac \
 		&& new_name=`cat $dirname/${i}.patch | sed -n '/Subject/,/^$/p;s/$\n/_/g' | sed "s/Subject\: //g;s/ /_/g"` \
+		&& echo -e "$new_name\n" \
 		&& mv $dirname/${i}.patch $dirname/${i}_$(sanitize "${new_name}").patch \
 		&& i=$((i+1))
 	done
