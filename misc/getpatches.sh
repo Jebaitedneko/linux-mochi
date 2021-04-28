@@ -2,12 +2,12 @@
 
 # https://stackoverflow.com/a/44811468
 sanitize() {
-   local s="${1?need a string}" # receive input in first argument
-   s="${s//[^[:alnum:]]/-}"     # replace all non-alnum characters to -
-   s="${s//+(-)/-}"             # convert multiple - to single -
-   s="${s/#-}"                  # remove - from start
-   s="${s/%-}"                  # remove - from end
-   echo "${s,,}"                # convert to lowercase
+   local s="${1?need a string}"     # receive input in first argument
+   s="${s//[^[:alnum:]]/-}"         # replace all non-alnum characters to -
+   s="${s//+(-)/-}"                 # convert multiple - to single -
+   s="${s/#-}"                      # remove - from start
+   s="${s/%-}"                      # remove - from end
+   echo "${s,,}" | sed "s/--/-/g"   # convert to lowercase and remove multiple '-'
 }
 
 j=0
@@ -32,7 +32,7 @@ get_patches() {
 				echo $l
 				curl -s `echo $1=$l` > $dirname/${i}.patch ;;
 		esac \
-		&& new_name=`cat $dirname/${i}.patch | sed -n '/Subject/,/^$/p;s/$\n/_/g' | sed "s/Subject\: //g;s/ /_/g"` \
+		&& new_name=`cat $dirname/${i}.patch | grep "Subject:" | sed "s/Subject: //g"` \
 		&& echo -e "$new_name\n" \
 		&& mv $dirname/${i}.patch $dirname/${i}_$(sanitize "${new_name}").patch \
 		&& i=$((i+1))
