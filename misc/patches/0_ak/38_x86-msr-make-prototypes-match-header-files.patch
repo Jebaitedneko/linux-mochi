@@ -1,0 +1,38 @@
+From 3893d3e8aff6b53ebc42d5edb1d35842d0c79df4 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sun, 28 Mar 2021 19:05:26 -0700
+Subject: x86/msr: Make prototypes match header files
+
+gcc 11 complains when arrays in prototypes do not match the function.
+Fix two occurrences here.
+
+Signed-off-by: Andi Kleen <andi@firstfloor.org>
+---
+ arch/x86/lib/msr-smp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/lib/msr-smp.c b/arch/x86/lib/msr-smp.c
+index 75a0915b0d01d..40bbe56bde325 100644
+--- a/arch/x86/lib/msr-smp.c
++++ b/arch/x86/lib/msr-smp.c
+@@ -252,7 +252,7 @@ static void __wrmsr_safe_regs_on_cpu(void *info)
+ 	rv->err = wrmsr_safe_regs(rv->regs);
+ }
+ 
+-int rdmsr_safe_regs_on_cpu(unsigned int cpu, u32 *regs)
++int rdmsr_safe_regs_on_cpu(unsigned int cpu, u32 regs[8])
+ {
+ 	int err;
+ 	struct msr_regs_info rv;
+@@ -265,7 +265,7 @@ int rdmsr_safe_regs_on_cpu(unsigned int cpu, u32 *regs)
+ }
+ EXPORT_SYMBOL(rdmsr_safe_regs_on_cpu);
+ 
+-int wrmsr_safe_regs_on_cpu(unsigned int cpu, u32 *regs)
++int wrmsr_safe_regs_on_cpu(unsigned int cpu, u32 regs[8])
+ {
+ 	int err;
+ 	struct msr_regs_info rv;
+-- 
+cgit 1.2.3-1.el7
+
