@@ -68,6 +68,11 @@ if [ -z ${cibuild+x} ]; then
   cibuild=n
 fi
 
+# Check if lld needs to be selected, default N.
+if [ -z ${lld+x} ]; then
+  lld=n
+fi
+
 # Tweak kernel options prior to a build via nconfig
 _makenconfig=
 
@@ -374,17 +379,20 @@ prepare() {
 
 build() {
   cd linux-${_major}
-  wget https://github.com/kdrag0n/proton-clang/raw/master/bin/lld -O ld.lld && chmod +x ld.lld
+  if [ "$lld" = "y" ]; then
+	wget https://github.com/kdrag0n/proton-clang/raw/master/bin/lld -O ld.lld && chmod +x ld.lld
+  fi
   if [ "$cibuild" = "y" ]; then
     msg2 "CI Build Starting..."
     make -j$((`nproc`+2)) \
-    LD=$(pwd)/ld.lld HOSTLD=$(pwd)/ld.lld \
-    all
+		$([ "$lld" = "y" ] && echo "LD=$(pwd)/ld.lld HOSTLD=$(pwd)/ld.lld") \
+		all
   else
     msg2 "Normal Build Starting..."
-    make -j$((`nproc`+2)) CC="ccache gcc" \
-    LD=$(pwd)/ld.lld HOSTLD=$(pwd)/ld.lld \
-    all
+	make -j$((`nproc`+2)) \
+		$([ "$lld" = "y" ] && echo "LD=$(pwd)/ld.lld HOSTLD=$(pwd)/ld.lld") \
+		CC="ccache gcc" \
+		all
   fi
 }
 
