@@ -133,7 +133,7 @@ _srcname="linux-$_xanmod_str"
 source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
     "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
-    "https://gitlab.manjaro.org/packages/core/linux512/-/archive/${_manjaro_sha}/linux11-${_manjaro_sha}.tar.gz"
+    "https://gitlab.manjaro.org/packages/core/linux512/-/archive/${_manjaro_sha}/linux12-${_manjaro_sha}.tar.gz"
 )
 
 sha256sums=(
