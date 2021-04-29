@@ -48,3 +48,4 @@ source misc/patchsrc
 # get_patches $andi "$andi_commits_1" "korg" # lto-5.12.1-wip
 # get_patches $andi "$andi_commits_2" "korg" # lto-5.12.2-wip
 get_patches $andi "$andi_commits_3" "korg" # lto-5.12.3
+get_patches $clear "$clear_commits" "git" # 5.11/clearlinux
