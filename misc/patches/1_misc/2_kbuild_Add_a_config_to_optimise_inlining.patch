@@ -1,0 +1,60 @@
+From d63e202e5920ca121ab8b7a8fd6bb048758ce7a5 Mon Sep 17 00:00:00 2001
+From: Diab Neiroukh <lazerl0rd@thezest.dev>
+Date: Fri, 15 Jan 2021 00:24:19 +0000
+Subject: [PATCH] kbuild: Add a config to optimise inlining.
+
+Increased inlining can provide an improvement in performance, but also
+increases the size of the final kernel image. This config peovides a bit
+more control on how much is inlined to further optimise the kernel for
+certain workloads.
+
+Signed-off-by: Diab Neiroukh <lazerl0rd@thezest.dev>
+---
+ Makefile     | 14 ++++++++++++++
+ init/Kconfig |  8 ++++++++
+ 2 files changed, 22 insertions(+)
+
+diff --git a/Makefile b/Makefile
+index ac5513a7020d..fd74a27d1d28 100644
+--- a/Makefile
++++ b/Makefile
+@@ -757,6 +757,20 @@ KBUILD_CFLAGS	+= -Os
+ KBUILD_LDFLAGS	+= -Os
+ endif
+ 
++ifdef CONFIG_INLINE_OPTIMIZATION
++ifdef CONFIG_CC_IS_CLANG
++KBUILD_CFLAGS	+= -mllvm -inline-threshold=600
++KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=750
++else ifdef CONFIG_CC_IS_GCC
++KBUILD_CFLAGS	+= --param max-inline-insns-single=600
++KBUILD_CFLAGS	+= --param max-inline-insns-auto=750
++# We limit inlining to 5KB on the stack.
++KBUILD_CFLAGS	+= --param large-stack-frame=12288
++KBUILD_CFLAGS	+= --param inline-min-speedup=5
++KBUILD_CFLAGS	+= --param inline-unit-growth=60
++endif
++endif
++
+ # Tell gcc to never replace conditional load with a non-conditional one
+ KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
+ KBUILD_CFLAGS	+= $(call cc-option,-fno-allow-store-data-races)
+diff --git a/init/Kconfig b/init/Kconfig
+index a14b9febc4fa..f5d9217c7b77 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -177,6 +177,14 @@ config BUILD_SALT
+ 	  This is mostly useful for distributions which want to ensure the
+ 	  build is unique between builds. It's safe to leave the default.
+ 
++config INLINE_OPTIMIZATION
++	bool "Optimize compiler inlining"
++	default n
++	help
++	  Inlining functions in the hot-path can help improve performance,
++	  while also increasing the final size of the kernel image. Setting
++	  this option informs the compiler to optimize inlining.
++
+ config HAVE_KERNEL_GZIP
+ 	bool
+ 

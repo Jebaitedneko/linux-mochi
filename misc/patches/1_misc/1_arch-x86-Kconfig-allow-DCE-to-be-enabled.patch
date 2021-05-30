@@ -1,0 +1,24 @@
+From 752f39bcf160ef77f845db889acfc1a722d8a536 Mon Sep 17 00:00:00 2001
+From: Jebaitedneko <Jebaitedneko@gmail.com>
+Date: Sun, 30 May 2021 12:45:10 +0530
+Subject: [PATCH] arch: x86: Kconfig: allow DCE to be enabled
+
+---
+ arch/x86/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index f313c5b81..ccac1bf22 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -214,6 +214,7 @@ config X86
+ 	select HAVE_PERF_EVENTS
+ 	select HAVE_PERF_EVENTS_NMI
+ 	select HAVE_HARDLOCKUP_DETECTOR_PERF	if PERF_EVENTS && HAVE_PERF_EVENTS_NMI
++	select HAVE_LD_DEAD_CODE_DATA_ELIMINATION
+ 	select HAVE_PCI
+ 	select HAVE_PERF_REGS
+ 	select HAVE_PERF_USER_STACK_DUMP
+-- 
+2.31.1
+
