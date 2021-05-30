@@ -2,15 +2,15 @@ kind: pipeline
 name: piledriver
 
 steps:
-- name: build
+- name: piledriver
   image: archlinux:base-devel
   commands:
-    - curl -fsSL "https://repo.archlinuxcn.org/x86_64/glibc-linux4-2.33-4-x86_64.pkg.tar.zst" | bsdtar -C / -xvf -
-    - pacman -Syu --needed --noconfirm wget base-devel xmlto inetutils bc cpio python-sphinx python-sphinx_rtd_theme graphviz imagemagick git
-    - sed -i '/E_ROOT/d' /usr/bin/makepkg
-    - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf
-    - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf
-    - cd /drone/src
+    - curl -fsSL "https://repo.archlinuxcn.org/x86_64/glibc-linux4-2.33-4-x86_64.pkg.tar.zst" | bsdtar -C / -xvf - &> /dev/null
+    - pacman -Syu --needed --noconfirm wget base-devel xmlto inetutils bc cpio python-sphinx python-sphinx_rtd_theme graphviz imagemagick git &> /dev/null
+    - sed -i '/E_ROOT/d' /usr/bin/makepkg &> /dev/null
+    - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf &> /dev/null
+    - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf &> /dev/null
+    - cd /drone/src &> /dev/null
     - env cibuild=y _microarchitecture=10 makepkg -s --skipinteg --skipchecksums --skippgpcheck
     - bash misc/upload.sh
 

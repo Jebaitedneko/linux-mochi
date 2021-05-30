@@ -1,0 +1,41 @@
+From b4cd9cf4e88af4f168f4df773b1c9811bd8e24ab Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Tue, 4 May 2021 20:34:00 -0700
+Subject: [PATCH] kbuild: Don't remove link-vmlinux temporary files on
+ exit/signal
+
+Keep them around until they are cleaned up by make clean. This
+uses a bit more disk space, but makes it easier to debug any
+problems with the kernel link process.
+
+Suggested-by: Masahiro Yamada <masahiroy@kernel.org>
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ scripts/link-vmlinux.sh | 14 --------------
+ 1 file changed, 14 deletions(-)
+
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index 5cc3069a1659..27aac42bd35d 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -317,20 +317,6 @@ cleanup()
+ 	rm -f vmlinux.o
+ }
+ 
+-on_exit()
+-{
+-	if [ $? -ne 0 ]; then
+-		cleanup
+-	fi
+-}
+-trap on_exit EXIT
+-
+-on_signals()
+-{
+-	exit 1
+-}
+-trap on_signals HUP INT QUIT TERM
+-
+ # Use "make V=1" to debug this script
+ case "${KBUILD_VERBOSE}" in
+ *1*)

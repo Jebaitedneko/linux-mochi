@@ -44,8 +44,7 @@ get_patches() {
 # for fetching sha: curl "repo_link" | grep "Copy the full SHA" | cut -f2 -d \" | grep -v "[0-9]:[0-9]"
 # for cleanup: cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '
 # for regenerating: for l in $(cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '); do sed -i "/${l}/d" ../../../patchsrc; done
+
 source misc/patchsrc
-# get_patches $andi "$andi_commits_1" "korg" # lto-5.12.1-wip
-# get_patches $andi "$andi_commits_2" "korg" # lto-5.12.2-wip
-get_patches $andi "$andi_commits_3" "korg" # lto-5.12.3
+get_patches $andi "$andi_commits" "git" # lto-5.12-3
 get_patches $clear "$clear_commits" "git" # 5.11/clearlinux

@@ -1,0 +1,35 @@
+From e426a8627a0e2faa05a48aabd56e451aea26d54e Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sat, 1 May 2021 22:58:23 -0700
+Subject: [PATCH] fixup! btf: Fix up btf_ids.h for gcc lto
+
+---
+ include/linux/btf_ids.h | 1 +
+ include/linux/fs.h      | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/btf_ids.h b/include/linux/btf_ids.h
+index 58e760eea625..dedfad3fd0f9 100644
+--- a/include/linux/btf_ids.h
++++ b/include/linux/btf_ids.h
+@@ -147,6 +147,7 @@ extern struct btf_id_set name;
+ #define BTF_ID_UNUSED
+ #define BTF_ID_LIST_GLOBAL(name) u32 name[1];
+ #define BTF_ID_LIST_SINGLE(name, prefix, typename) static u32 name[1];
++#define BTD_ID_LIST_END
+ #define BTF_SET_START(name) static struct btf_id_set name = { 0 };
+ #define BTF_SET_START_GLOBAL(name) static struct btf_id_set name = { 0 };
+ #define BTF_SET_END(name)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ec8f3ddf4a6a..d04c3d000b78 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2623,7 +2623,7 @@ static inline struct user_namespace *file_mnt_user_ns(struct file *file)
+ {
+ 	return mnt_user_ns(file->f_path.mnt);
+ }
+-extern long vfs_truncate(const struct path *, loff_t);
++extern __visible long vfs_truncate(const struct path *, loff_t);
+ int do_truncate(struct user_namespace *, struct dentry *, loff_t start,
+ 		unsigned int time_attrs, struct file *filp);
+ extern int vfs_fallocate(struct file *file, int mode, loff_t offset,

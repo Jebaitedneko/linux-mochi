@@ -109,7 +109,7 @@ _major=5.12
 _branch=5.x
 xanmod=1
 
-pkgver=${_major}.0
+pkgver=${_major}.8
 pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
@@ -117,7 +117,7 @@ pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
 _xanmod_str=${pkgver}-xanmod${xanmod}
-_manjaro_sha="3153154c3de2123c20231c0a259cbc3a0c1f70e7" # 5.12.0-1
+_manjaro_sha="1c746ee81492180ef82e5df560e274c8db843f4f" # 5.12.8-1
 
 license=(GPL2)
 
@@ -284,15 +284,15 @@ prepare() {
   scripts/config --disable CONFIG_HAVE_STACK_VALIDATION
 
   msg2 "Getting hamadmarri's auto config"
-  wget -q "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/cachy%20debug%20helper%20files/apply_suggested_configs.sh"
+  wget -q "https://github.com/hamadmarri/cacule-cpu-scheduler/raw/master/scripts/apply_suggested_configs.sh"
   msg2 "Applying auto config"
   chmod +x apply_suggested_configs.sh
   ./apply_suggested_configs.sh
-  msg2 "Getting hamadmarri's cacule sched"
-  wget -q "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch"
-  msg2 "Applying cacule patch"
-  patch -Np1 < cacule-${_major}.patch
-  scripts/config --disable CONFIG_CACULE_SCHED
+#   msg2 "Getting hamadmarri's cacule sched"
+#   wget -q "https://raw.githubusercontent.com/hamadmarri/cacule-cpu-scheduler/master/patches/CacULE/v${_major}/cacule-${_major}.patch"
+#   msg2 "Applying cacule patch"
+#   patch -Np1 < cacule-${_major}.patch
+#   scripts/config --disable CONFIG_CACULE_SCHED
   # scripts/config --enable CACULE_RDB
 
   scripts/config --enable CONFIG_LTO
