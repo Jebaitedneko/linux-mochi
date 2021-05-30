@@ -218,8 +218,8 @@ prepare() {
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/ulp/ipoib/Kconfig
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/hw/mthca/Kconfig
   sed -i "s/def_bool BT_CMTP/def_bool n/g;s/&&/||/g" drivers/isdn/capi/Kconfig
-  scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
-  scripts/config --enable CONFIG_INLINE_OPTIMIZATION
+  # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
+  # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
   scripts/config --enable CONFIG_INIT_STACK_ALL_ZERO
   scripts/config --disable CONFIG_DEBUG_KERNEL
   scripts/config --disable CONFIG_DEBUG_MISC
@@ -283,7 +283,6 @@ prepare() {
   scripts/config --disable CONFIG_CAPI_TRACE
   scripts/config --disable CONFIG_HAVE_STACK_VALIDATION
   scripts/config --disable CONFIG_SCSI_ESAS2R
-  scripts/config --disable CONFIG_UCSI_CCG
 
   msg2 "Getting hamadmarri's auto config"
   wget -q "https://github.com/hamadmarri/cacule-cpu-scheduler/raw/master/scripts/apply_suggested_configs.sh"
