@@ -97,7 +97,7 @@ local active_arch=$(
 
 # Check for custom pkgbase name, default is the extracted pkgbase.
 if [ -z ${custpkgbase+x} ]; then
-  pkgbase=linux-manjaro-xanmod-mochi-${active_arch,,}
+  pkgbase=linux-mochi-${active_arch,,}
 fi
 
 # If custom name is present, use it.
