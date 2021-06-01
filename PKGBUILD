@@ -201,8 +201,9 @@ prepare() {
   patch_dir=../../misc/patches
   for d in $(cd $patch_dir && ls -1); do
     for i in {1000..0}; do
-        [ -f $patch_dir/${d}/${i}_*.patch ] &&
-            msg2 "Applying patch ${i} from ${d}" && patch -Np1 < $patch_dir/${d}/${i}_*.patch
+		patch_file="$patch_dir/${d}/${i}_*.patch"
+        [ -f $patch_file ] && echo -e "\n$(ls -1 $patch_file)" &&
+            msg2 "Applying patch ${i} from ${d}" && patch -Np1 < $patch_file
     done
   done
   sed -i "/HAVE_DEBUG_KMEMLEAK/d" arch/x86/Kconfig
