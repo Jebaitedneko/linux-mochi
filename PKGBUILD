@@ -286,6 +286,7 @@ prepare() {
   scripts/config --disable CONFIG_SCSI_ESAS2R
   scripts/config --disable CONFIG_DEFAULT_FQ_PIE
   scripts/config --enable CONFIG_DEFAULT_FQ_CODEL
+  scripts/config --disable CONFIG_TCP_CONG_BBR2
   scripts/config --disable CONFIG_DEFAULT_BBR2
   scripts/config --enable CONFIG_DEFAULT_BBR
 
