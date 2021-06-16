@@ -26,7 +26,7 @@ index a1a57f214c58..1c137e193d65 100755
  	vmlinux_link ${1}
  
  	info "BTF" ${2}
--	LLVM_OBJCOPY=${OBJCOPY} ${PAHOLE} -J ${1}
+-	LLVM_OBJCOPY="${OBJCOPY}" ${PAHOLE} -J ${1}
 +
 +	BTF_ARGS=""
 +	if [ -n "${CONFIG_LTO_GCC}" ]; then
