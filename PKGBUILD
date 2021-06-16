@@ -109,7 +109,7 @@ _major=5.12
 _branch=5.x
 xanmod=1
 
-pkgver=${_major}.9
+pkgver=${_major}.10
 pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgrel=${xanmod}
 pkgdesc='Linux Xanmod'
@@ -117,7 +117,7 @@ pkgdesc='Linux Xanmod'
 url="http://www.xanmod.org/"
 arch=(x86_64)
 _xanmod_str=${pkgver}-xanmod${xanmod}
-_manjaro_sha="0211b506f56c5d878f68cb5b26b1b71570972368" # 5.12.9-1
+_manjaro_sha="943e0cc81c8fad91361d5be2f0578f7d65d790b2" # 5.12.10-1
 
 license=(GPL2)
 
