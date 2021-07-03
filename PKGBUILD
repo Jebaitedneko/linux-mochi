@@ -1,19 +1,5 @@
-# Maintainer: ANDRoid7890 <andrey.android7890@gmail.com>
-
-# https://gitlab.manjaro.org/packages/core/linux513
-#
-# Maintainer: Philip Müller
-# Maintainer: Bernhard Landauer
-# Maintainer: Helmut Stult
-
-# http://aur.archlinux.org/packages/linux-xanmod
-#
-# Maintainer: Joan Figueras
-# Contributor: Torge Matthies
-# Contributor: Jan Alexander Steffens (heftig)
-# Contributor: Yoshi2889
-# Contributor: Tobias Powalowski
-# Contributor: Thomas Baechler
+# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# Maintainer: Jebaitedneko <jebaitedneko@gmail.com>
 
 ##
 ## The following variables can be customized at build time. Use env or export to change at your wish
@@ -105,19 +91,18 @@ if [ "$custpkgbase" != "" ]; then
   pkgbase=linux-$custpkgbase
 fi
 
-_major=5.13
+_major=5.12
 _branch=5.x
-xanmod=2
 
-pkgver=${_major}.0
+pkgver=${_major}.14.zen1
 pkgname=("${pkgbase}" "${pkgbase}-headers")
-pkgrel=${xanmod}
-pkgdesc='Linux Xanmod'
+pkgrel=1
+pkgdesc='Linux ZEN'
 
-url="http://www.xanmod.org/"
+_srctag=v${pkgver%.*}-${pkgver##*.}
+url="https://github.com/zen-kernel/zen-kernel/commits/$_srctag"
 arch=(x86_64)
-_xanmod_str=${pkgver}-xanmod${xanmod}
-_manjaro_sha="c83762affaa007660d5c26a4b1bd10890e4603c1" # 5.13.0-2
+_zen_sha="e036abbdf0cf4e914fd0acecf93c026a6bf6bc1c" # 5.12.14.zen1-1
 
 license=(GPL2)
 
@@ -128,24 +113,23 @@ makedepends=(
 
 options=('!strip')
 
-_srcname="linux-$_xanmod_str"
+_srcname="linux-${pkgver}"
 
 source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${_branch}/linux-${_major}.tar."{xz,sign}
-    "https://github.com/xanmod/linux/releases/download/$_xanmod_str/patch-$_xanmod_str.xz"
-    "https://gitlab.manjaro.org/packages/core/linux513/-/archive/${_manjaro_sha}/linux13-${_manjaro_sha}.tar.gz"
+    "https://github.com/zen-kernel/zen-kernel/releases/download/v${pkgver/.zen/-zen}/v${pkgver/.zen/-zen}.patch.xz"
 )
 
 sha256sums=(
     "SKIP"
     "SKIP"
     "SKIP"
-    "SKIP"
 )
 
 validpgpkeys=(
-    'ABAF11C65A2970B130ABE3C479BE3E4300411886' # Linux Torvalds
-    '647F28654894E3BD457199BE38DBBDC86092693E' # Greg Kroah-Hartman
+    'ABAF11C65A2970B130ABE3C479BE3E4300411886'  # Linus Torvalds
+    '647F28654894E3BD457199BE38DBBDC86092693E'  # Greg Kroah-Hartman
+    'A2FF3A36AAA56654109064AB19802F8B0D70FC30'  # Jan Alexander Steffens (heftig)
 )
 
 # Archlinux patches
@@ -159,15 +143,16 @@ export KBUILD_BUILD_USER=${KBUILD_BUILD_USER:-makepkg}
 export KBUILD_BUILD_TIMESTAMP=${KBUILD_BUILD_TIMESTAMP:-$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})}
 
 prepare() {
-  cd linux-${_major}  
-  
-  msg2 "Xanmod patch not found. Applying workaround..."
-  [ ! -f ../../patch-$_xanmod_str ] \
-    && xz -d ../../patch-$_xanmod_str.xz \
-    && mv ../../patch-$_xanmod_str ../
 
-  # Apply Xanmod patch
-  patch -Np1 -i ../patch-$_xanmod_str
+  cd linux-${_major}
+
+  msg2 "ZEN patch not found. Applying workaround..."
+  [ ! -f ../../v${pkgver/.zen/-zen}.patch ] \
+    && xz -d ../../v${pkgver/.zen/-zen}.patch.xz \
+    && mv ../../v${pkgver/.zen/-zen}.patch ../
+
+  # Apply ZEN patch
+  patch -Np1 -i ../v${pkgver/.zen/-zen}.patch
 
   local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
   msg2 "Setting version to ${_localversion}"
@@ -184,18 +169,8 @@ prepare() {
     msg2 "Applying patch $src..."
     patch -Np1 < "../$src"
   done
-  
-  # Manjaro patches
-  rm ../linux513-$_manjaro_sha/0001-ZEN-Add-sysctl-and-CONFIG-to-disallow-unprivileged-CLONE_NEWUSER.patch # not needed
-  local _patch
-  for _patch in ../linux513-$_manjaro_sha/*; do
-      [[ $_patch = *.patch ]] || continue
-      msg2 "Applying patch: $_patch..."
-      patch -Np1 < "../linux513-$_manjaro_sha/$_patch"
-  done 
-  git apply -p1 < "../linux513-$_manjaro_sha/0513-bootsplash.gitpatch"
 
-  cat "CONFIGS/xanmod/gcc/config" > ./.config
+  curl -s "https://raw.githubusercontent.com/archlinux/svntogit-packages/${_zen_sha}/trunk/config" > .config
 
   # Custom Patches
   # ( cd ../../ && ./misc/getpatches.sh ) # uncomment to re-enable auto-fetching
@@ -406,12 +381,11 @@ build() {
 }
 
 _package() {
-  pkgdesc="The Linux kernel and modules with Xanmod and Manjaro patches (Bootsplash support). Ashmem and binder are enabled"
-  depends=('coreutils' 'linux-firmware' 'kmod' 'initramfs' 'mkinitcpio>=27')
+  pkgdesc="The $pkgdesc kernel and modules"
+  depends=(coreutils kmod initramfs)
   optdepends=('crda: to set the correct wireless channels of your country'
-              'linux-firmware: firmware images needed for some devices'
-              'bootsplash-systemd: for bootsplash functionality')
-  provides=(VIRTUALBOX-GUEST-MODULES WIREGUARD-MODULE)
+              'linux-firmware: firmware images needed for some devices')
+  provides=(VIRTUALBOX-GUEST-MODULES WIREGUARD-MODULE VHBA-MODULE)
   replaces=()
   conflicts=()
 
