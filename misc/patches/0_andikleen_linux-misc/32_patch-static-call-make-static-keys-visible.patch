@@ -1,0 +1,68 @@
+From d5eee509a2c23c63d7dc391b88b572b8d828e2eb Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sat, 3 Apr 2021 09:35:54 -0700
+Subject: [PATCH] static_call: Make static keys visible
+
+static key structures are referenced from assembler, thus
+need to be visible with gcc LTO.
+
+Signed-off-by: Andi Kleen <andi@firstfloor.org>
+---
+ include/linux/static_call.h | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/include/linux/static_call.h b/include/linux/static_call.h
+index fc94faa53b5b..99c5d1b34b9c 100644
+--- a/include/linux/static_call.h
++++ b/include/linux/static_call.h
+@@ -149,7 +149,7 @@ extern long __static_call_return0(void);
+ 
+ #define __DEFINE_STATIC_CALL(name, _func, _func_init)			\
+ 	DECLARE_STATIC_CALL(name, _func);				\
+-	struct static_call_key STATIC_CALL_KEY(name) = {		\
++	__visible struct static_call_key STATIC_CALL_KEY(name) = {	\
+ 		.func = _func_init,					\
+ 		.type = 1,						\
+ 	};								\
+@@ -157,7 +157,7 @@ extern long __static_call_return0(void);
+ 
+ #define DEFINE_STATIC_CALL_NULL(name, _func)				\
+ 	DECLARE_STATIC_CALL(name, _func);				\
+-	struct static_call_key STATIC_CALL_KEY(name) = {		\
++	__visible struct static_call_key STATIC_CALL_KEY(name) = {	\
+ 		.func = NULL,						\
+ 		.type = 1,						\
+ 	};								\
+@@ -186,14 +186,14 @@ static inline int static_call_init(void) { return 0; }
+ 
+ #define __DEFINE_STATIC_CALL(name, _func, _func_init)			\
+ 	DECLARE_STATIC_CALL(name, _func);				\
+-	struct static_call_key STATIC_CALL_KEY(name) = {		\
++	__visible struct static_call_key STATIC_CALL_KEY(name) = {	\
+ 		.func = _func_init,					\
+ 	};								\
+ 	ARCH_DEFINE_STATIC_CALL_TRAMP(name, _func_init)
+ 
+ #define DEFINE_STATIC_CALL_NULL(name, _func)				\
+ 	DECLARE_STATIC_CALL(name, _func);				\
+-	struct static_call_key STATIC_CALL_KEY(name) = {		\
++	__visible struct static_call_key STATIC_CALL_KEY(name) = {	\
+ 		.func = NULL,						\
+ 	};								\
+ 	ARCH_DEFINE_STATIC_CALL_NULL_TRAMP(name)
+@@ -244,13 +244,13 @@ static inline long __static_call_return0(void)
+ 
+ #define __DEFINE_STATIC_CALL(name, _func, _func_init)			\
+ 	DECLARE_STATIC_CALL(name, _func);				\
+-	struct static_call_key STATIC_CALL_KEY(name) = {		\
++	__visible struct static_call_key STATIC_CALL_KEY(name) = {	\
+ 		.func = _func_init,					\
+ 	}
+ 
+ #define DEFINE_STATIC_CALL_NULL(name, _func)				\
+ 	DECLARE_STATIC_CALL(name, _func);				\
+-	struct static_call_key STATIC_CALL_KEY(name) = {		\
++	__visible struct static_call_key STATIC_CALL_KEY(name) = {	\
+ 		.func = NULL,						\
+ 	}
+ 

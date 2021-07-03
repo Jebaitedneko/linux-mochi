@@ -1,0 +1,27 @@
+From 45fc24254df69291f9ebd597bc747df2eb61ee3a Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Sun, 25 Apr 2021 17:04:36 -0700
+Subject: [PATCH] x86/paravirt/lto: Export native_steal_clock
+
+Functions referrenced from paravirt assembler need to be global
+in gcc LTO because they could end up in a different object file.
+Make native_steal_clock global and __visible
+
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+---
+ arch/x86/kernel/paravirt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/paravirt.c b/arch/x86/kernel/paravirt.c
+index 04cafc057bed..286cbff6f3b8 100644
+--- a/arch/x86/kernel/paravirt.c
++++ b/arch/x86/kernel/paravirt.c
+@@ -124,7 +124,7 @@ unsigned int paravirt_patch(u8 type, void *insn_buff, unsigned long addr,
+ struct static_key paravirt_steal_enabled;
+ struct static_key paravirt_steal_rq_enabled;
+ 
+-static u64 native_steal_clock(int cpu)
++__visible u64 native_steal_clock(int cpu)
+ {
+ 	return 0;
+ }
