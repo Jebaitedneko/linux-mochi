@@ -1,0 +1,40 @@
+From 63b8ace71b25e7b5d424ddac1f08ae6e0f968dbf Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sun, 2 May 2021 06:52:06 -0700
+Subject: [PATCH] kbuild: Use --btf_encode_force for BTF with gcc lto
+
+pahole -J doesn't like some of the dwarf generated for percpu variables
+by gcc LTO. It errors out with
+
+error: found variable '__percpu_rwsem_rc_cpu_hotplug_lock' in CU '' that has void type
+etc.
+
+Pass --btf_encode_force to ignore those errors for now. Root cause
+still unknown. I guess we can live without BTF for some
+percpu variables for now.
+
+Signed-off-by: Andi Kleen <andi@firstfloor.org>
+---
+ scripts/link-vmlinux.sh | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index a1a57f214c58..1c137e193d65 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -232,7 +232,14 @@ gen_btf()
+ 	vmlinux_link ${1}
+ 
+ 	info "BTF" ${2}
+-	LLVM_OBJCOPY="${OBJCOPY}" ${PAHOLE} -J ${1}
++
++	BTF_ARGS=""
++	if [ -n "${CONFIG_LTO_GCC}" ]; then
++		# gcc LTO generates some dwarf symbols that pahole
++		# doesn't like. Skip those instead of aborting.
++		BTF_ARGS=--btf_encode_force
++	fi
++	LLVM_OBJCOPY=${OBJCOPY} ${PAHOLE} -J ${BTF_ARGS} ${1}
+ 
+ 	# Create ${2} which contains just .BTF section but no symbols. Add
+ 	# SHF_ALLOC because .BTF will be part of the vmlinux image. --strip-all

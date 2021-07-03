@@ -1,0 +1,27 @@
+From ac5e34a2e2c7efbe14843219d082e0a41570c136 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Tue, 4 May 2021 20:40:28 -0700
+Subject: [PATCH] Revert "kbuild, link-vmlinux: Don't delete output files with
+ make -i"
+
+This reverts commit 0d17ebebb2fe94307d9e197dc7b676388dfdcb25.
+---
+ scripts/link-vmlinux.sh | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index 1c137e193d65..5cc3069a1659 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -307,11 +307,6 @@ sorttable()
+ # Delete output files in case of error
+ cleanup()
+ {
+-	# don't delete for make -i
+-	case "$MFLAGS" in
+-	*-i*) return ;;
+-	esac
+-
+ 	rm -f .btf.*
+ 	rm -f .tmp_System.map
+ 	rm -f .tmp_initcalls.lds

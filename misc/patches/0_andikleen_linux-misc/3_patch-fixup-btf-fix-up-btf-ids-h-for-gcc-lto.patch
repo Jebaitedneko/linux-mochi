@@ -1,0 +1,22 @@
+From 50dbf3c19845cf2e2c7bbd3cb479adee1e205787 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <andi@firstfloor.org>
+Date: Sat, 1 May 2021 22:59:51 -0700
+Subject: [PATCH] fixup! btf: Fix up btf_ids.h for gcc lto
+
+---
+ include/linux/fs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index d04c3d000b78..ec8f3ddf4a6a 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2623,7 +2623,7 @@ static inline struct user_namespace *file_mnt_user_ns(struct file *file)
+ {
+ 	return mnt_user_ns(file->f_path.mnt);
+ }
+-extern __visible long vfs_truncate(const struct path *, loff_t);
++extern long vfs_truncate(const struct path *, loff_t);
+ int do_truncate(struct user_namespace *, struct dentry *, loff_t start,
+ 		unsigned int time_attrs, struct file *filp);
+ extern int vfs_fallocate(struct file *file, int mode, loff_t offset,

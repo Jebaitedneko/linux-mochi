@@ -1,0 +1,37 @@
+From 8cde40d9ffc6c1f6292c0a6ca3f3dc68ea913847 Mon Sep 17 00:00:00 2001
+From: Steven Barrett <steven@liquorix.net>
+Date: Fri, 26 Feb 2021 16:04:46 -0600
+Subject: [PATCH] Revert "use lfence instead of rep and nop"
+
+Per a discussion on bbs.archlinux.org [1], LFENCE has a serializing
+property on AMD CPUs to block speculative execution. Revert this change
+so we can get performance back (if we lost any), on AMD systems.
+
+And how this affects Intel I don't know, but Clearlinux uses this patch
+to improve performance.  Perhaps Intel implements LFENCE differently
+than AMD?
+
+Also note, the author of this patch didn't include any information for
+why this change was made, whether it fixed a bug or improved
+performance.
+
+[1] https://bbs.archlinux.org/viewtopic.php?id=235442
+
+This reverts commit f52bc57cf1b7c043dc5beba63f44075b84cebac1.
+---
+ arch/x86/include/asm/vdso/processor.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/vdso/processor.h b/arch/x86/include/asm/vdso/processor.h
+index e2c45674f98975..57b1a7034c640a 100644
+--- a/arch/x86/include/asm/vdso/processor.h
++++ b/arch/x86/include/asm/vdso/processor.h
+@@ -10,7 +10,7 @@
+ /* REP NOP (PAUSE) is a good thing to insert into busy-wait loops. */
+ static __always_inline void rep_nop(void)
+ {
+-	asm volatile("lfence" ::: "memory");
++	asm volatile("rep; nop" ::: "memory");
+ }
+ 
+ static __always_inline void cpu_relax(void)

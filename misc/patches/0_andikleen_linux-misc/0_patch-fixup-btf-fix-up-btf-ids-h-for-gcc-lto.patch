@@ -1,0 +1,22 @@
+From 3fb2a4dd065a905fdd7748ed55cd52eaad3695a3 Mon Sep 17 00:00:00 2001
+From: Andi Kleen <ak@linux.intel.com>
+Date: Wed, 5 May 2021 08:53:39 -0700
+Subject: [PATCH] fixup! btf: Fix up btf_ids.h for gcc lto
+
+---
+ include/linux/btf_ids.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/btf_ids.h b/include/linux/btf_ids.h
+index dedfad3fd0f9..7986c42842c9 100644
+--- a/include/linux/btf_ids.h
++++ b/include/linux/btf_ids.h
+@@ -147,7 +147,7 @@ extern struct btf_id_set name;
+ #define BTF_ID_UNUSED
+ #define BTF_ID_LIST_GLOBAL(name) u32 name[1];
+ #define BTF_ID_LIST_SINGLE(name, prefix, typename) static u32 name[1];
+-#define BTD_ID_LIST_END
++#define BTF_ID_LIST_END
+ #define BTF_SET_START(name) static struct btf_id_set name = { 0 };
+ #define BTF_SET_START_GLOBAL(name) static struct btf_id_set name = { 0 };
+ #define BTF_SET_END(name)
