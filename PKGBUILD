@@ -195,6 +195,7 @@ prepare() {
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/ulp/ipoib/Kconfig
   sed -i "s/if EXPERT/if !EXPERT/g" drivers/infiniband/hw/mthca/Kconfig
   sed -i "s/def_bool BT_CMTP/def_bool n/g;s/&&/||/g" drivers/isdn/capi/Kconfig
+  sed -i "s/=y/=m/g" net/ipv4/Kconfig
   # scripts/config --enable CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
   # scripts/config --enable CONFIG_INLINE_OPTIMIZATION
   scripts/config --enable CONFIG_INIT_STACK_ALL_ZERO
@@ -264,6 +265,7 @@ prepare() {
   scripts/config --enable CONFIG_DEFAULT_FQ_CODEL
   scripts/config --disable CONFIG_TCP_CONG_BBR2
   scripts/config --disable CONFIG_DEFAULT_BBR2
+  scripts/config --disable CONFIG_DEFAULT_CUBIC
   scripts/config --enable CONFIG_DEFAULT_BBR
   scripts/config --enable CONFIG_HIGH_RES_TIMERS
 
