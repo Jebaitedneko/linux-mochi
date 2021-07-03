@@ -195,8 +195,7 @@ prepare() {
   done 
   git apply -p1 < "../linux513-$_manjaro_sha/0513-bootsplash.gitpatch"
 
-  cat "../linux513-$_manjaro_sha/config" > ./.config
-  cat "../linux513-$_manjaro_sha/config.anbox" >> ./.config
+  cat "CONFIGS/xanmod/gcc/config" > ./.config
 
   # Custom Patches
   # ( cd ../../ && ./misc/getpatches.sh ) # uncomment to re-enable auto-fetching
