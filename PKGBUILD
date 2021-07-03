@@ -195,6 +195,9 @@ prepare() {
   done 
   git apply -p1 < "../linux513-$_manjaro_sha/0513-bootsplash.gitpatch"
 
+  cat "../linux513-$_manjaro_sha/config" > ./.config
+  cat "../linux513-$_manjaro_sha/config.anbox" >> ./.config
+
   # Custom Patches
   # ( cd ../../ && ./misc/getpatches.sh ) # uncomment to re-enable auto-fetching
   patch_dir=../../misc/patches
@@ -288,6 +291,7 @@ prepare() {
   scripts/config --disable CONFIG_TCP_CONG_BBR2
   scripts/config --disable CONFIG_DEFAULT_BBR2
   scripts/config --enable CONFIG_DEFAULT_BBR
+  scripts/config --enable CONFIG_HIGH_RES_TIMERS
 
   msg2 "Getting hamadmarri's auto config"
   wget -q "https://github.com/hamadmarri/cacule-cpu-scheduler/raw/master/scripts/apply_suggested_configs.sh"
