@@ -150,6 +150,14 @@ export KBUILD_BUILD_TIMESTAMP=${KBUILD_BUILD_TIMESTAMP:-$(date -Ru${SOURCE_DATE_
 
 prepare() {
 
+  if [ "$arch_source" = "y" ]; then
+    msg2 "arch_source=y detected. performing a squashed revert of a few patches..."
+    (
+        cd linux-${_major}/../..
+	    curl -s "https://github.com/Jebaitedneko/linux-manjaro-xanmod/commit/21ce7fe50605229b63b31c09dc491662cc67b619.patch" | patch -Np1
+    )
+  fi
+
   cd linux-${_major}
 
   msg2 "ZEN patch not found. Applying workaround..."
