@@ -59,6 +59,11 @@ if [ -z ${lld+x} ]; then
   lld=n
 fi
 
+# Allow a vanilla archlinux kernel build, default N.
+if [ -z ${arch_source+x} ]; then
+  arch_source=n
+fi
+
 # Tweak kernel options prior to a build via nconfig
 _makenconfig=
 
@@ -103,6 +108,7 @@ _srctag=v${pkgver%.*}-${pkgver##*.}
 url="https://github.com/zen-kernel/zen-kernel/commits/$_srctag"
 arch=(x86_64)
 _zen_sha="e036abbdf0cf4e914fd0acecf93c026a6bf6bc1c" # 5.12.14.zen1-1
+_arch_sha="ec9e9a4219fe221dec93fa16fddbe44a34933d8d" # 5.12.14.arch1-1
 
 license=(GPL2)
 
@@ -151,8 +157,11 @@ prepare() {
     && xz -d ../../v${pkgver/.zen/-zen}.patch.xz \
     && mv ../../v${pkgver/.zen/-zen}.patch ../
 
-  # Apply ZEN patch
-  patch -Np1 -i ../v${pkgver/.zen/-zen}.patch
+  if [ "$arch_source" = "n" ]; then
+    msg2 "arch_source=y not passed. assuming zen..."
+    # Apply ZEN patch
+    patch -Np1 -i ../v${pkgver/.zen/-zen}.patch
+  fi
 
   local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
   msg2 "Setting version to ${_localversion}"
@@ -171,6 +180,10 @@ prepare() {
   done
 
   curl -s "https://raw.githubusercontent.com/archlinux/svntogit-packages/${_zen_sha}/trunk/config" > .config
+  if [ "$arch_source" = "y" ]; then
+	msg2 "Applying archlinux config..."
+	curl -s "https://raw.githubusercontent.com/archlinux/svntogit-packages/${_arch_sha}/trunk/config" > .config
+  fi
 
   # Custom Patches
   # ( cd ../../ && ./misc/getpatches.sh ) # uncomment to re-enable auto-fetching
