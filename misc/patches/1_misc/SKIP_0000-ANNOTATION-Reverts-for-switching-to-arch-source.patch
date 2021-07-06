@@ -1,0 +1,122 @@
+From 21ce7fe50605229b63b31c09dc491662cc67b619 Mon Sep 17 00:00:00 2001
+From: Jebaitedneko <Jebaitedneko@gmail.com>
+Date: Tue, 6 Jul 2021 04:26:24 +0530
+Subject: [PATCH 1/5] [ANNOTATION]: Reverts for switching to arch source
+
+since this is plain linux with no additional commits, we're reverting a few commits.
+
+Revert "misc: patches: 0: patch hunk of patch 7"
+
+This reverts commit afbdfc2b6830341902e89604fb1d7a6f51597586.
+
+Revert "misc: rebase arch patches"
+
+This reverts commit ddaa6b27418138bcd5b5553864014a7430728aa1.
+---
+ ...tf-encode-force-for-btf-with-gcc-lto.patch |  2 +-
+ ...6-crash-remove-crash-reserve-low-1m-.patch |  0
+ ...onfig-x86-reserve-low-and-reservelow.patch |  0
+ ...p-always-reserve-the-first-1m-of-ram.patch |  0
+ ...-snb-memory--later-in-setup-arch--to.patch | 35 +++++++++++++++----
+ ...eral-reservations-of-start-of-memory.patch |  0
+ ...onsolidate-early-memory-reservations.patch |  0
+ 7 files changed, 29 insertions(+), 8 deletions(-)
+ rename misc/patches/3_archlinux_linux/{applied => }/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch (100%)
+ rename misc/patches/3_archlinux_linux/{applied => }/1_patch-x86-setup-remove-config-x86-reserve-low-and-reservelow.patch (100%)
+ rename misc/patches/3_archlinux_linux/{applied => }/2_patch-x86-setup-always-reserve-the-first-1m-of-ram.patch (100%)
+ rename misc/patches/3_archlinux_linux/{applied => }/4_patch-x86-setup-merge-several-reservations-of-start-of-memory.patch (100%)
+ rename misc/patches/3_archlinux_linux/{applied => }/5_patch-x86-setup-consolidate-early-memory-reservations.patch (100%)
+
+diff --git a/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch b/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch
+index e9a1f14..9ae3a74 100644
+--- a/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch
++++ b/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch
+@@ -26,7 +26,7 @@ index a1a57f214c58..1c137e193d65 100755
+  	vmlinux_link ${1}
+  
+  	info "BTF" ${2}
+--	LLVM_OBJCOPY="${OBJCOPY}" ${PAHOLE} -J ${1}
++-	LLVM_OBJCOPY=${OBJCOPY} ${PAHOLE} -J ${1}
+ +
+ +	BTF_ARGS=""
+ +	if [ -n "${CONFIG_LTO_GCC}" ]; then
+diff --git a/misc/patches/3_archlinux_linux/applied/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch b/misc/patches/3_archlinux_linux/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch
+similarity index 100%
+rename from misc/patches/3_archlinux_linux/applied/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch
+rename to misc/patches/3_archlinux_linux/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch
+diff --git a/misc/patches/3_archlinux_linux/applied/1_patch-x86-setup-remove-config-x86-reserve-low-and-reservelow.patch b/misc/patches/3_archlinux_linux/1_patch-x86-setup-remove-config-x86-reserve-low-and-reservelow.patch
+similarity index 100%
+rename from misc/patches/3_archlinux_linux/applied/1_patch-x86-setup-remove-config-x86-reserve-low-and-reservelow.patch
+rename to misc/patches/3_archlinux_linux/1_patch-x86-setup-remove-config-x86-reserve-low-and-reservelow.patch
+diff --git a/misc/patches/3_archlinux_linux/applied/2_patch-x86-setup-always-reserve-the-first-1m-of-ram.patch b/misc/patches/3_archlinux_linux/2_patch-x86-setup-always-reserve-the-first-1m-of-ram.patch
+similarity index 100%
+rename from misc/patches/3_archlinux_linux/applied/2_patch-x86-setup-always-reserve-the-first-1m-of-ram.patch
+rename to misc/patches/3_archlinux_linux/2_patch-x86-setup-always-reserve-the-first-1m-of-ram.patch
+diff --git a/misc/patches/3_archlinux_linux/3_patch-x86-setup-move-trim-snb-memory--later-in-setup-arch--to.patch b/misc/patches/3_archlinux_linux/3_patch-x86-setup-move-trim-snb-memory--later-in-setup-arch--to.patch
+index ddb062e..478c6b6 100644
+--- a/misc/patches/3_archlinux_linux/3_patch-x86-setup-move-trim-snb-memory--later-in-setup-arch--to.patch
++++ b/misc/patches/3_archlinux_linux/3_patch-x86-setup-move-trim-snb-memory--later-in-setup-arch--to.patch
+@@ -39,18 +39,39 @@ diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
+ index 282d572e49af97..7d466f51be1fa0 100644
+ --- a/arch/x86/kernel/setup.c
+ +++ b/arch/x86/kernel/setup.c
+-@@ -728,7 +728,6 @@ static void __init early_reserve_memory(void)
+-
++@@ -634,11 +634,16 @@ static void __init trim_snb_memory(void)
++ 	printk(KERN_DEBUG "reserving inaccessible SNB gfx pages\n");
++ 
++ 	/*
++-	 * Reserve all memory below the 1 MB mark that has not
++-	 * already been reserved.
+++	 * SandyBridge integrated graphics devices have a bug that prevents
+++	 * them from accessing certain memory ranges, namely anything below
+++	 * 1M and in the pages listed in bad_pages[] above.
+++	 *
+++	 * To avoid these pages being ever accessed by SNB gfx devices
+++	 * reserve all memory below the 1 MB mark and bad_pages that have
+++	 * not already been reserved at boot time.
++ 	 */
++ 	memblock_reserve(0, 1<<20);
++-	
+++
++ 	for (i = 0; i < ARRAY_SIZE(bad_pages); i++) {
++ 		if (memblock_reserve(bad_pages[i], PAGE_SIZE))
++ 			printk(KERN_WARNING "failed to reserve 0x%08lx\n",
++@@ -747,8 +752,6 @@ static void __init early_reserve_memory(void)
++ 
+  	reserve_ibft_region();
+  	reserve_bios_regions();
++-
+ -	trim_snb_memory();
+  }
+-
++ 
+  /*
+-@@ -1075,6 +1074,13 @@ void __init setup_arch(char **cmdline_p)
+-
++@@ -1082,6 +1085,13 @@ void __init setup_arch(char **cmdline_p)
++ 
+  	reserve_real_mode();
+-
++ 
+ +	/*
+ +	 * Reserving memory causing GPU hangs on Sandy Bridge integrated
+ +	 * graphics devices should be done after we allocated memory under
+@@ -59,5 +80,5 @@ index 282d572e49af97..7d466f51be1fa0 100644
+ +	trim_snb_memory();
+ +
+  	init_mem_mapping();
+-
++ 
+  	idt_setup_early_pf();
+diff --git a/misc/patches/3_archlinux_linux/applied/4_patch-x86-setup-merge-several-reservations-of-start-of-memory.patch b/misc/patches/3_archlinux_linux/4_patch-x86-setup-merge-several-reservations-of-start-of-memory.patch
+similarity index 100%
+rename from misc/patches/3_archlinux_linux/applied/4_patch-x86-setup-merge-several-reservations-of-start-of-memory.patch
+rename to misc/patches/3_archlinux_linux/4_patch-x86-setup-merge-several-reservations-of-start-of-memory.patch
+diff --git a/misc/patches/3_archlinux_linux/applied/5_patch-x86-setup-consolidate-early-memory-reservations.patch b/misc/patches/3_archlinux_linux/5_patch-x86-setup-consolidate-early-memory-reservations.patch
+similarity index 100%
+rename from misc/patches/3_archlinux_linux/applied/5_patch-x86-setup-consolidate-early-memory-reservations.patch
+rename to misc/patches/3_archlinux_linux/5_patch-x86-setup-consolidate-early-memory-reservations.patch
+-- 
+2.32.0
+
