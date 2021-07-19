@@ -152,10 +152,10 @@ prepare() {
 
   if [ "$arch_source" = "y" ]; then
     msg2 "arch_source=y detected. performing a squashed revert of a few patches..."
-    (
-        cd linux-${_major}/../..
-	    patch -Np1 < "misc/patches/1_misc/SKIP_0000-ANNOTATION-Reverts-for-switching-to-arch-source.patch"
-    )
+#     (
+#         cd linux-${_major}/../..
+# 	    patch -Np1 < "misc/patches/1_misc/SKIP_0000-ANNOTATION-Reverts-for-switching-to-arch-source.patch"
+#     )
   fi
 
   cd linux-${_major}

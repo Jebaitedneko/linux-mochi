@@ -27,19 +27,6 @@ This reverts commit ddaa6b27418138bcd5b5553864014a7430728aa1.
  rename misc/patches/3_archlinux_linux/{applied => }/4_patch-x86-setup-merge-several-reservations-of-start-of-memory.patch (100%)
  rename misc/patches/3_archlinux_linux/{applied => }/5_patch-x86-setup-consolidate-early-memory-reservations.patch (100%)
 
-diff --git a/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch b/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch
-index e9a1f14..9ae3a74 100644
---- a/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch
-+++ b/misc/patches/0_andikleen_linux-misc/7_patch-kbuild-use--btf-encode-force-for-btf-with-gcc-lto.patch
-@@ -26,7 +26,7 @@ index a1a57f214c58..1c137e193d65 100755
-  	vmlinux_link ${1}
-  
-  	info "BTF" ${2}
---	LLVM_OBJCOPY="${OBJCOPY}" ${PAHOLE} -J ${1}
-+-	LLVM_OBJCOPY=${OBJCOPY} ${PAHOLE} -J ${1}
- +
- +	BTF_ARGS=""
- +	if [ -n "${CONFIG_LTO_GCC}" ]; then
 diff --git a/misc/patches/3_archlinux_linux/applied/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch b/misc/patches/3_archlinux_linux/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch
 similarity index 100%
 rename from misc/patches/3_archlinux_linux/applied/0_patch-x86-crash-remove-crash-reserve-low-1m-.patch

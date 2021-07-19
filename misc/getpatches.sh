@@ -46,7 +46,4 @@ get_patches() {
 # for regenerating: for l in $(cat *.patch | grep -E "[0-9a-f]{40}" | cut -f2 -d ' '); do sed -i "/${l}/d" ../../../patchsrc; done
 
 source misc/patchsrc
-get_patches $andi "$andi_commits" "git" # lto-5.12-3
-get_patches $clear "$clear_commits" "git" # 5.11/clearlinux
-get_patches $arch "$arch_commits" "git" # v5.12.14-arch1
 get_patches $rtw88 "$rtw88_commits" "git" # master
