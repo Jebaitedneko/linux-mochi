@@ -1,0 +1,28 @@
+From 3eab8ca6b1756d551da42e958c6f48f68cf470d3 Mon Sep 17 00:00:00 2001
+From: Wan Jiabing <wanjiabing@vivo.com>
+Date: Fri, 30 Apr 2021 10:49:50 +0800
+Subject: [PATCH] rtw88: Remove duplicate include of coex.h
+
+In commit fb8517f4fade4 ("rtw88: 8822c: add CFO tracking"),
+"coex.h" was added here which caused the duplicate include.
+Remove the later duplicate include.
+
+Signed-off-by: Wan Jiabing <wanjiabing@vivo.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Link: https://lore.kernel.org/r/20210430024951.33406-1-wanjiabing@vivo.com
+---
+ drivers/net/wireless/realtek/rtw88/rtw8822c.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/net/wireless/realtek/rtw88/rtw8822c.c b/drivers/net/wireless/realtek/rtw88/rtw8822c.c
+index 436347f3b60f2..1a6721611dc12 100644
+--- a/drivers/net/wireless/realtek/rtw88/rtw8822c.c
++++ b/drivers/net/wireless/realtek/rtw88/rtw8822c.c
+@@ -17,7 +17,6 @@
+ #include "util.h"
+ #include "bf.h"
+ #include "efuse.h"
+-#include "coex.h"
+ 
+ #define IQK_DONE_8822C 0xaa
+ 

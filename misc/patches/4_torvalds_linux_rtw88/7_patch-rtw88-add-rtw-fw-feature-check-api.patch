@@ -1,0 +1,111 @@
+From 9a711831c4e71f29897b3489c3097081aea580c4 Mon Sep 17 00:00:00 2001
+From: Chin-Yen Lee <timlee@realtek.com>
+Date: Fri, 14 May 2021 15:55:16 +0800
+Subject: [PATCH] rtw88: add rtw_fw_feature_check api
+
+add api to check if a certain feature is supported.
+
+Signed-off-by: Chin-Yen Lee <timlee@realtek.com>
+Signed-off-by: Ping-Ke Shih <pkshih@realtek.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Link: https://lore.kernel.org/r/20210514075517.14216-2-pkshih@realtek.com
+---
+ drivers/net/wireless/realtek/rtw88/fw.c       | 3 +--
+ drivers/net/wireless/realtek/rtw88/fw.h       | 6 ++++++
+ drivers/net/wireless/realtek/rtw88/mac80211.c | 3 +--
+ drivers/net/wireless/realtek/rtw88/main.c     | 4 ++--
+ drivers/net/wireless/realtek/rtw88/ps.c       | 4 ++--
+ 5 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/net/wireless/realtek/rtw88/fw.c b/drivers/net/wireless/realtek/rtw88/fw.c
+index 797b08b2a4942..00c56ab6306bd 100644
+--- a/drivers/net/wireless/realtek/rtw88/fw.c
++++ b/drivers/net/wireless/realtek/rtw88/fw.c
+@@ -584,10 +584,9 @@ void rtw_fw_beacon_filter_config(struct rtw_dev *rtwdev, bool connect,
+ 	struct rtw_sta_info *si =
+ 		sta ? (struct rtw_sta_info *)sta->drv_priv : NULL;
+ 	s32 threshold = bss_conf->cqm_rssi_thold + rssi_offset;
+-	struct rtw_fw_state *fw = &rtwdev->fw;
+ 	u8 h2c_pkt[H2C_PKT_SIZE] = {0};
+ 
+-	if (!(fw->feature & FW_FEATURE_BCN_FILTER))
++	if (!rtw_fw_feature_check(&rtwdev->fw, FW_FEATURE_BCN_FILTER))
+ 		return;
+ 
+ 	if (!connect) {
+diff --git a/drivers/net/wireless/realtek/rtw88/fw.h b/drivers/net/wireless/realtek/rtw88/fw.h
+index 3bfee27b1e1ae..832ef2bfe5f92 100644
+--- a/drivers/net/wireless/realtek/rtw88/fw.h
++++ b/drivers/net/wireless/realtek/rtw88/fw.h
+@@ -591,6 +591,12 @@ static inline struct rtw_c2h_cmd *get_c2h_from_skb(struct sk_buff *skb)
+ 	return (struct rtw_c2h_cmd *)(skb->data + pkt_offset);
+ }
+ 
++static inline bool rtw_fw_feature_check(struct rtw_fw_state *fw,
++					enum rtw_fw_feature feature)
++{
++	return !!(fw->feature & feature);
++}
++
+ void rtw_fw_c2h_cmd_rx_irqsafe(struct rtw_dev *rtwdev, u32 pkt_offset,
+ 			       struct sk_buff *skb);
+ void rtw_fw_c2h_cmd_handle(struct rtw_dev *rtwdev, struct sk_buff *skb);
+diff --git a/drivers/net/wireless/realtek/rtw88/mac80211.c b/drivers/net/wireless/realtek/rtw88/mac80211.c
+index 9087c5b1ea80a..8f46b16c8d5d6 100644
+--- a/drivers/net/wireless/realtek/rtw88/mac80211.c
++++ b/drivers/net/wireless/realtek/rtw88/mac80211.c
+@@ -148,13 +148,12 @@ static int rtw_ops_add_interface(struct ieee80211_hw *hw,
+ {
+ 	struct rtw_dev *rtwdev = hw->priv;
+ 	struct rtw_vif *rtwvif = (struct rtw_vif *)vif->drv_priv;
+-	struct rtw_fw_state *fw = &rtwdev->fw;
+ 	enum rtw_net_type net_type;
+ 	u32 config = 0;
+ 	u8 port = 0;
+ 	u8 bcn_ctrl = 0;
+ 
+-	if (fw->feature & FW_FEATURE_BCN_FILTER)
++	if (rtw_fw_feature_check(&rtwdev->fw, FW_FEATURE_BCN_FILTER))
+ 		vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
+ 				     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
+ 	rtwvif->port = port;
+diff --git a/drivers/net/wireless/realtek/rtw88/main.c b/drivers/net/wireless/realtek/rtw88/main.c
+index 94fadef5c131d..df115bb7fdf7b 100644
+--- a/drivers/net/wireless/realtek/rtw88/main.c
++++ b/drivers/net/wireless/realtek/rtw88/main.c
+@@ -1111,11 +1111,11 @@ static enum rtw_lps_deep_mode rtw_update_lps_deep_mode(struct rtw_dev *rtwdev,
+ 		return LPS_DEEP_MODE_NONE;
+ 
+ 	if ((chip->lps_deep_mode_supported & BIT(LPS_DEEP_MODE_PG)) &&
+-	    (fw->feature & FW_FEATURE_PG))
++	    rtw_fw_feature_check(fw, FW_FEATURE_PG))
+ 		return LPS_DEEP_MODE_PG;
+ 
+ 	if ((chip->lps_deep_mode_supported & BIT(LPS_DEEP_MODE_LCLK)) &&
+-	    (fw->feature & FW_FEATURE_LCLK))
++	    rtw_fw_feature_check(fw, FW_FEATURE_LCLK))
+ 		return LPS_DEEP_MODE_LCLK;
+ 
+ 	return LPS_DEEP_MODE_NONE;
+diff --git a/drivers/net/wireless/realtek/rtw88/ps.c b/drivers/net/wireless/realtek/rtw88/ps.c
+index 3bead34c3d10e..3f0ac33156d6a 100644
+--- a/drivers/net/wireless/realtek/rtw88/ps.c
++++ b/drivers/net/wireless/realtek/rtw88/ps.c
+@@ -152,7 +152,7 @@ static void rtw_fw_leave_lps_check(struct rtw_dev *rtwdev)
+ 	else
+ 		fw = &rtwdev->fw;
+ 
+-	if (fw->feature & FW_FEATURE_LPS_C2H)
++	if (rtw_fw_feature_check(fw, FW_FEATURE_LPS_C2H))
+ 		ret = __rtw_fw_leave_lps_check_c2h(rtwdev);
+ 	else
+ 		ret = __rtw_fw_leave_lps_check_reg(rtwdev);
+@@ -172,7 +172,7 @@ static void rtw_fw_leave_lps_check_prepare(struct rtw_dev *rtwdev)
+ 	else
+ 		fw = &rtwdev->fw;
+ 
+-	if (fw->feature & FW_FEATURE_LPS_C2H)
++	if (rtw_fw_feature_check(fw, FW_FEATURE_LPS_C2H))
+ 		reinit_completion(&rtwdev->lps_leave_check);
+ }
+ 
