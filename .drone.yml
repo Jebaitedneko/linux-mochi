@@ -11,7 +11,7 @@ steps:
     - sed -i "s/PKGEXT='.pkg.tar.xz'/PKGEXT='.pkg.tar.zst'/" /etc/makepkg.conf &> /dev/null
     - echo 'COMPRESSZST+=(--threads=0)' >> /etc/makepkg.conf &> /dev/null
     - cd /drone/src &> /dev/null
-    - env cibuild=y _microarchitecture=10 makepkg -s --skipinteg --skipchecksums --skippgpcheck
+    - env arch_source=y cibuild=y _microarchitecture=0 makepkg -s --skipinteg --skipchecksums --skippgpcheck
     - bash misc/upload.sh
 
 trigger:
