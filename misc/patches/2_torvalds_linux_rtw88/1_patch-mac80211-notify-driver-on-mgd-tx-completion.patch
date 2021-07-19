@@ -186,12 +186,12 @@ diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
 index 0559c6b6ee715..a0572ce99826b 100644
 --- a/net/mac80211/mlme.c
 +++ b/net/mac80211/mlme.c
-@@ -683,6 +683,7 @@ static void ieee80211_send_assoc(struct ieee80211_sub_if_data *sdata)
+@@ -712,6 +712,7 @@ static void ieee80211_send_assoc(struct ieee80211_sub_if_data *sdata)
+ 	u32 rates = 0;
+ 	__le16 listen_int;
  	struct element *ext_capa = NULL;
- 	enum nl80211_iftype iftype = ieee80211_vif_type_p2p(&sdata->vif);
- 	const struct ieee80211_sband_iftype_data *iftd;
 +	struct ieee80211_prep_tx_info info = {};
- 
+
  	/* we know it's writable, cast away the const */
  	if (assoc_data->ie_len)
 @@ -784,12 +785,14 @@ static void ieee80211_send_assoc(struct ieee80211_sub_if_data *sdata)
