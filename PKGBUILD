@@ -96,10 +96,10 @@ if [ "$custpkgbase" != "" ]; then
   pkgbase=linux-$custpkgbase
 fi
 
-_major=5.12
+_major=5.13
 _branch=5.x
 
-pkgver=${_major}.14.zen1
+pkgver=${_major}.1.zen1
 pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgrel=1
 pkgdesc='Linux ZEN'
@@ -107,8 +107,8 @@ pkgdesc='Linux ZEN'
 _srctag=v${pkgver%.*}-${pkgver##*.}
 url="https://github.com/zen-kernel/zen-kernel/commits/$_srctag"
 arch=(x86_64)
-_zen_sha="e036abbdf0cf4e914fd0acecf93c026a6bf6bc1c" # 5.12.14.zen1-1
-_arch_sha="ec9e9a4219fe221dec93fa16fddbe44a34933d8d" # 5.12.14.arch1-1
+_zen_sha="dc03dd77c8d33f5a42e39fb893bb0cd26b924d4a" # 5.13.1.zen1-1
+_arch_sha="89c24952adbfa645d9e1a6f12c572929f7e4e3c7" # 5.13.1.arch1-1
 
 license=(GPL2)
 
