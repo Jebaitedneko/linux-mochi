@@ -104,7 +104,7 @@ pkgname=("${pkgbase}" "${pkgbase}-headers")
 pkgrel=1
 pkgdesc='Linux ZEN'
 
-_srctag=v${pkgver%.*}-${pkgver##*.}
+_srctag=v${pkgver%.*}-${pkgver*.}
 url="https://github.com/zen-kernel/zen-kernel/commits/$_srctag"
 arch=(x86_64)
 _zen_sha="dc03dd77c8d33f5a42e39fb893bb0cd26b924d4a" # 5.13.1.zen1-1
@@ -171,7 +171,7 @@ prepare() {
     patch -Np1 -i ../v${pkgver/.zen/-zen}.patch
   fi
 
-  local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g;s/[a-z A-Z]/\U&/g"`
+  local _localversion=`echo "-$pkgbase" | sed "s/linux-//g;s/xanmod-//g"`
   msg2 "Setting version to ${_localversion}"
   scripts/setlocalversion --save-scmversion
   #echo "-$pkgrel" > localversion.10-pkgrel
